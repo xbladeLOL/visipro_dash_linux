@@ -77,6 +77,7 @@ Création d'une version séparée `VisiPro-clean` destinée à Linux. Le projet 
 
 - Suppression des scripts npm `db:start` / `db:stop` dépendants de Docker Compose.
 - Ajout de `install.sh`, `check.sh`, `start.sh` avec shebang Linux.
+- `install.sh` installe/configure PostgreSQL via `apt`, `dnf` ou `pacman` si nécessaire, puis crée la base et l'utilisateur VisiPro.
 - Ajout de `.nvmrc` (`20`) et `engines.node >=20.18.0`.
 - Ajout de `.env.example` sans secrets réels.
 - Ajout d'un `.gitignore` complet pour caches, builds et secrets.

@@ -4,10 +4,10 @@
 
 - Linux x86_64.
 - Node.js `>=20.18.0` et npm `>=10`.
-- PostgreSQL accessible depuis `DATABASE_URL`.
+- PostgreSQL local ou installable via le script.
 - Git recommandé mais non obligatoire.
 
-Le projet n'utilise pas Docker dans cette version clean. PostgreSQL doit être installé localement ou fourni par un service externe.
+Le projet n'utilise pas Docker dans cette version clean. `install.sh` peut installer et configurer PostgreSQL localement sur les distributions Linux courantes.
 
 ## Installation
 
@@ -20,10 +20,19 @@ Le script :
 
 - vérifie Linux ;
 - vérifie Node.js/npm ;
+- installe PostgreSQL si `psql` est absent (`apt`, `dnf` ou `pacman`) ;
+- démarre/active le service PostgreSQL ;
+- crée l'utilisateur `visipro` et la base `visipro` ;
 - crée `.env` depuis `.env.example` si absent ;
 - installe les dépendances avec `npm ci` ;
 - lance `prisma generate` ;
-- affiche les étapes DB restantes.
+- lance `prisma db push`.
+
+Tu peux personnaliser la base créée via variables d'environnement avant installation :
+
+```bash
+VISIPRO_DB_NAME=visipro VISIPRO_DB_USER=visipro VISIPRO_DB_PASSWORD=mot_de_passe ./install.sh
+```
 
 ## Configuration
 
@@ -44,7 +53,13 @@ openssl rand -base64 32
 
 ## Base De Données
 
-Exemple local PostgreSQL :
+`install.sh` crée automatiquement :
+
+- base : `visipro`
+- utilisateur : `visipro`
+- mot de passe : `visipro_local_password`
+
+Configuration manuelle équivalente si tu ne veux pas que le script le fasse :
 
 ```bash
 sudo -u postgres psql
@@ -56,7 +71,7 @@ CREATE DATABASE visipro OWNER visipro;
 \q
 ```
 
-Puis :
+Puis, si installation manuelle :
 
 ```bash
 npm run db:push
@@ -116,6 +131,8 @@ npm run db:push
 - `DATABASE_URL is missing` : vérifier `.env`.
 - `password authentication failed` : vérifier utilisateur/mot de passe PostgreSQL.
 - `database does not exist` : créer la base `visipro`.
+- `sudo est requis` : l'installation PostgreSQL nécessite des droits administrateur.
+- `Gestionnaire de paquets non reconnu` : installe PostgreSQL manuellement puis relance `./install.sh`.
 - `Prisma Client did not initialize` : lancer `npm run db:generate`.
 - Port `3000` occupé : lancer avec `PORT=3001 npm run dev`.
 
