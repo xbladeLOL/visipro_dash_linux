@@ -50,7 +50,7 @@ async function main() {
       defaultVatRate: 20,
       quotePrefix: "DEV",
       invoicePrefix: "FAC",
-      initialCashBalance: 3500
+      initialCashBalance: 50
     }
   });
 
