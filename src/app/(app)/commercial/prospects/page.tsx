@@ -11,21 +11,29 @@ import { formatCurrency } from "@/lib/utils";
 
 const stages = Object.values(ProspectStage);
 
-export default async function ProspectsPage({ searchParams }: { searchParams: Promise<{ q?: string; stage?: string }> }) {
+export default async function ProspectsPage({ searchParams }: { searchParams: Promise<{ q?: string; stage?: string; category?: string }> }) {
   const params = await searchParams;
-  const prospects = await prisma.prospect.findMany({
-    where: {
-      stage: params.stage ? (params.stage as ProspectStage) : undefined,
-      OR: params.q ? [{ companyName: { contains: params.q, mode: "insensitive" } }, { city: { contains: params.q, mode: "insensitive" } }, { activity: { contains: params.q, mode: "insensitive" } }] : undefined
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  const [prospects, categories] = await Promise.all([
+    prisma.prospect.findMany({
+      where: {
+        stage: params.stage ? (params.stage as ProspectStage) : undefined,
+        categoryId: params.category || undefined,
+        OR: params.q ? [{ companyName: { contains: params.q, mode: "insensitive" } }, { city: { contains: params.q, mode: "insensitive" } }, { activity: { contains: params.q, mode: "insensitive" } }] : undefined
+      },
+      include: { category: true },
+      orderBy: { createdAt: "desc" }
+    }),
+    prisma.prospectCategory.findMany({ orderBy: { name: "asc" } })
+  ]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div><h1 className="text-3xl font-semibold">Prospects</h1><p className="text-muted-foreground">CRM, pipeline et relances commerciales.</p></div>
-        <Link href="/commercial/prospects/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link>
+        <div className="flex gap-2">
+          <Link href="/commercial/prospects/categories" className="inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted">Catégories</Link>
+          <Link href="/commercial/prospects/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link>
+        </div>
       </div>
       <Card>
         <form action={createProspect} className="grid gap-3 md:grid-cols-4">
@@ -36,6 +44,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
           <Input name="city" placeholder="Ville" />
           <Input name="source" placeholder="Source" />
           <Input name="activity" placeholder="Activité" />
+          <select name="categoryId" className="h-10 rounded-lg border bg-card px-3 text-sm"><option value="">Catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
           <Input name="potentialValue" type="number" step="0.01" placeholder="Valeur potentielle" />
           <select name="stage" className="h-10 rounded-lg border bg-card px-3 text-sm">{stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}</select>
           <Textarea name="notes" placeholder="Notes" className="md:col-span-2" />
@@ -52,6 +61,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
                 <Link href={`/commercial/prospects/${prospect.id}`} key={prospect.id} className="block rounded-xl border bg-background p-3 text-sm hover:bg-muted">
                   <div className="font-medium">{prospect.companyName}</div>
                   <div className="text-muted-foreground">{prospect.city ?? "Ville inconnue"}</div>
+                  {prospect.category ? <div className="mt-1 inline-block rounded-full border px-2 py-0.5 text-xs text-muted-foreground">{prospect.category.name}</div> : null}
                   <div className="mt-2 font-medium">{formatCurrency(Number(prospect.potentialValue))}</div>
                 </Link>
               ))}
@@ -65,8 +75,9 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
             <h2 className="font-semibold">Tous les prospects</h2>
             <p className="text-sm text-muted-foreground">Vue tableau pour modifier le pipeline ou supprimer une fiche.</p>
           </div>
-          <form className="flex gap-2">
+          <form className="flex flex-wrap gap-2">
             <Input name="q" placeholder="Rechercher" defaultValue={params.q ?? ""} />
+            <select name="category" defaultValue={params.category ?? ""} className="h-10 rounded-lg border bg-card px-3 text-sm"><option value="">Catégorie : Toutes</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
             <Button variant="secondary">Filtrer</Button>
           </form>
         </div>
@@ -75,6 +86,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
             <tr className="text-left text-muted-foreground">
               <th className="py-2">Entreprise</th>
               <th>Contact</th>
+              <th>Catégorie</th>
               <th>Ville</th>
               <th>Valeur</th>
               <th>Statut</th>
@@ -87,6 +99,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
               <tr key={prospect.id} className="border-t align-middle">
                 <td className="py-3"><Link className="font-medium hover:underline" href={`/commercial/prospects/${prospect.id}`}>{prospect.companyName}</Link></td>
                 <td>{prospect.contactName ?? "-"}</td>
+                <td>{prospect.category?.name ?? "-"}</td>
                 <td>{prospect.city ?? "-"}</td>
                 <td>{formatCurrency(Number(prospect.potentialValue))}</td>
                 <td>

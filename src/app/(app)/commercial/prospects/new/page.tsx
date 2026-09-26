@@ -4,8 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { createProspect } from "@/features/prospects/actions";
 import { formatProspectStage } from "@/lib/labels";
+import { prisma } from "@/lib/prisma";
 
-export default function NewProspectPage() {
+export default async function NewProspectPage() {
+  const categories = await prisma.prospectCategory.findMany({ orderBy: { name: "asc" } });
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
@@ -22,6 +25,10 @@ export default function NewProspectPage() {
           <Input name="city" placeholder="Ville" />
           <Input name="source" placeholder="Source" />
           <Input name="activity" placeholder="Activité" />
+          <select name="categoryId" className="h-10 rounded-lg border bg-card px-3 text-sm">
+            <option value="">Catégorie</option>
+            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
           <Input name="potentialValue" type="number" step="0.01" placeholder="Valeur potentielle" />
           <select name="stage" className="h-10 rounded-lg border bg-card px-3 text-sm">
             {Object.values(ProspectStage).map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}

@@ -26,6 +26,7 @@ async function main() {
   await prisma.expense.deleteMany();
   await prisma.client.deleteMany();
   await prisma.prospect.deleteMany();
+  await prisma.prospectCategory.deleteMany();
   await prisma.service.deleteMany();
   await prisma.category.deleteMany();
   await prisma.companySettings.deleteMany();
@@ -66,10 +67,16 @@ async function main() {
     )
   );
 
+  const prospectCategories = await Promise.all(
+    ["Restaurant /-CA", "Artisan", "Commerce de détail", "Services aux entreprises", "Santé / Bien-être", "Bâtiment / Travaux", "Immobilier", "Association / Collectivité", "Autre"].map((name) =>
+      prisma.prospectCategory.create({ data: { name } })
+    )
+  );
+
   const prospects = await Promise.all([
-    prisma.prospect.create({ data: { companyName: "Bistrot du Centre DEMO", contactName: "Claire Martin", email: "claire@example.com", city: "Lyon", source: "Google Maps", activity: "Restaurant", potentialValue: 1800, stage: "MEETING", nextAction: "Préparer proposition site + menu", nextFollowUpAt: addDays(new Date(), 1), notes: "Données de démonstration" } }),
-    prisma.prospect.create({ data: { companyName: "Garage Moderne DEMO", contactName: "Karim Benali", city: "Villeurbanne", source: "Prospection", activity: "Garage", potentialValue: 900, stage: "CONTACTED", nextAction: "Relance téléphonique", nextFollowUpAt: new Date(), notes: "Données de démonstration" } }),
-    prisma.prospect.create({ data: { companyName: "Institut Belle Peau DEMO", city: "Annecy", source: "Instagram", activity: "Institut", potentialValue: 1200, stage: "QUOTE_SENT", notes: "Données de démonstration" } })
+    prisma.prospect.create({ data: { companyName: "Bistrot du Centre DEMO", contactName: "Claire Martin", email: "claire@example.com", city: "Lyon", source: "Google Maps", activity: "Restaurant", potentialValue: 1800, stage: "MEETING", categoryId: prospectCategories[0].id, nextAction: "Préparer proposition site + menu", nextFollowUpAt: addDays(new Date(), 1), notes: "Données de démonstration" } }),
+    prisma.prospect.create({ data: { companyName: "Garage Moderne DEMO", contactName: "Karim Benali", city: "Villeurbanne", source: "Prospection", activity: "Garage", potentialValue: 900, stage: "CONTACTED", categoryId: prospectCategories[1].id, nextAction: "Relance téléphonique", nextFollowUpAt: new Date(), notes: "Données de démonstration" } }),
+    prisma.prospect.create({ data: { companyName: "Institut Belle Peau DEMO", city: "Annecy", source: "Instagram", activity: "Institut", potentialValue: 1200, stage: "QUOTE_SENT", categoryId: prospectCategories[4].id, notes: "Données de démonstration" } })
   ]);
 
   await prisma.activity.create({ data: { prospectId: prospects[0].id, type: "CALL", content: "Appel de découverte. Besoin d'un site vitrine et d'une carte restaurant." } });

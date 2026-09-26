@@ -12,6 +12,7 @@ export const prospectSchema = z.object({
   city: z.string().optional(),
   source: z.string().optional(),
   activity: z.string().optional(),
+  categoryId: z.string().optional(),
   potentialValue: moneySchema.default(0),
   stage: z.nativeEnum(ProspectStage),
   notes: z.string().optional(),

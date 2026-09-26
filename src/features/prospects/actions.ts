@@ -16,6 +16,7 @@ export async function createProspect(formData: FormData) {
     city: formData.get("city") || undefined,
     source: formData.get("source") || undefined,
     activity: formData.get("activity") || undefined,
+    categoryId: formData.get("categoryId") || undefined,
     potentialValue: formData.get("potentialValue") || 0,
     stage: formData.get("stage") || ProspectStage.NEW,
     notes: formData.get("notes") || undefined,
@@ -47,5 +48,30 @@ export async function deleteProspect(formData: FormData) {
     return;
   }
   await prisma.prospect.delete({ where: { id } });
+  revalidatePath("/commercial/prospects");
+}
+
+export async function addProspectCategory(formData: FormData) {
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  await prisma.prospectCategory.upsert({ where: { name }, create: { name }, update: {} });
+  revalidatePath("/commercial/prospects/categories");
+  revalidatePath("/commercial/prospects");
+  revalidatePath("/commercial/prospects/new");
+}
+
+export async function renameProspectCategory(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  await prisma.prospectCategory.update({ where: { id }, data: { name } });
+  revalidatePath("/commercial/prospects/categories");
+  revalidatePath("/commercial/prospects");
+}
+
+export async function deleteProspectCategory(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  await prisma.prospectCategory.delete({ where: { id } });
+  revalidatePath("/commercial/prospects/categories");
   revalidatePath("/commercial/prospects");
 }

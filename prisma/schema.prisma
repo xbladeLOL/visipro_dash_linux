@@ -249,6 +249,8 @@ model Prospect {
   stage           ProspectStage @default(NEW)
   nextAction      String?
   nextFollowUpAt  DateTime?
+  categoryId      String?
+  category        ProspectCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   convertedClient Client?
   activities      Activity[]
   quotes          Quote[]
@@ -259,6 +261,14 @@ model Prospect {
 
   @@index([stage])
   @@index([city])
+  @@index([categoryId])
+}
+
+model ProspectCategory {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  prospects Prospect[]
+  createdAt DateTime   @default(now())
 }
 
 model Client {
