@@ -1,0 +1,11 @@
+import Link from "next/link";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { Card } from "@/components/ui/card";
+import { deleteClient } from "@/features/clients/actions";
+import { prisma } from "@/lib/prisma";
+import { formatCurrency } from "@/lib/utils";
+
+export default async function ClientsPage() {
+  const clients = await prisma.client.findMany({ include: { invoices: true, projects: true, payments: true, transactions: true }, orderBy: { createdAt: "desc" } });
+  return <div className="space-y-6"><div className="flex items-start justify-between gap-4"><div><h1 className="text-3xl font-semibold">Clients</h1><p className="text-muted-foreground">Portefeuille client et revenus générés.</p></div><Link href="/commercial/clients/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau client</Link></div><Card className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-muted-foreground"><th className="py-2">Client</th><th>Contact</th><th>Projets</th><th>CA total</th><th>Données liées</th><th className="text-right">Actions</th></tr></thead><tbody>{clients.map((client) => { const locked = client.invoices.length + client.payments.length + client.transactions.length > 0; return <tr key={client.id} className="border-t"><td className="py-3"><Link className="font-medium hover:underline" href={`/commercial/clients/${client.id}`}>{client.legalName}</Link></td><td>{client.email ?? "-"}</td><td>{client.projects.length}</td><td>{formatCurrency(client.invoices.reduce((sum, invoice) => sum + Number(invoice.total), 0))}</td><td>{locked ? "Financier" : client.projects.length > 0 ? "Projets" : "Aucune"}</td><td className="text-right"><form action={deleteClient}><input type="hidden" name="id" value={client.id} /><ConfirmSubmitButton message={locked ? "Ce client a des données financières. La suppression peut être refusée pour préserver l'historique. Continuer ?" : "Supprimer ce client ?"} variant="ghost" className="h-8 px-2 text-xs text-red-600">Supprimer</ConfirmSubmitButton></form></td></tr>; })}</tbody></table></Card></div>;
+}

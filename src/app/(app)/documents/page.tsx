@@ -1,0 +1,10 @@
+import Link from "next/link";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { Card } from "@/components/ui/card";
+import { deleteDocument } from "@/features/documents/actions";
+import { prisma } from "@/lib/prisma";
+
+export default async function DocumentsPage() {
+  const documents = await prisma.document.findMany({ include: { client: true, prospect: true, project: true, quote: true, invoice: true, expense: true }, orderBy: { createdAt: "desc" } });
+  return <div className="space-y-6"><div className="flex items-start justify-between gap-4"><div><h1 className="text-3xl font-semibold">Documents</h1><p className="text-muted-foreground">Métadonnées prêtes pour stockage externe type S3.</p></div><Link href="/documents/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau document</Link></div><Card className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-muted-foreground"><th className="py-2">Nom</th><th>Type</th><th>Objet lié</th><th>Stockage</th><th>Lien</th><th className="text-right">Actions</th></tr></thead><tbody>{documents.map((document) => <tr key={document.id} className="border-t"><td className="py-3 font-medium">{document.name}</td><td>{document.type}</td><td>{document.client?.legalName ?? document.prospect?.companyName ?? document.project?.name ?? document.quote?.number ?? document.invoice?.number ?? document.expense?.vendor ?? "-"}</td><td>{document.storageKey}</td><td>{document.url ? <a className="underline" href={document.url} target="_blank" rel="noreferrer">Ouvrir</a> : "-"}</td><td className="text-right"><form action={deleteDocument}><input type="hidden" name="id" value={document.id} /><ConfirmSubmitButton message="Supprimer ce document ?" variant="ghost" className="h-8 px-2 text-xs text-red-600">Supprimer</ConfirmSubmitButton></form></td></tr>)}</tbody></table></Card></div>;
+}
