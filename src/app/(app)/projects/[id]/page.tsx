@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { completeTask, createProjectTask, deleteTask, reopenTask } from "@/features/tasks/actions";
+import { deleteProject } from "@/features/projects/actions";
 import { formatPriority, formatProjectStatus, formatTaskStatus } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
@@ -27,9 +28,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           <h1 className="text-3xl font-semibold">{project.name}</h1>
           <p className="text-muted-foreground">{project.client.legalName} - {formatProjectStatus(project.status)}</p>
         </div>
-        <div className="rounded-xl border px-4 py-3 text-right">
-          <div className="text-sm text-muted-foreground">Completion</div>
-          <div className="text-2xl font-semibold">{project.progress}%</div>
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl border px-4 py-3 text-right">
+            <div className="text-sm text-muted-foreground">Completion</div>
+            <div className="text-2xl font-semibold">{project.progress}%</div>
+          </div>
+          <form action={deleteProject}>
+            <input type="hidden" name="id" value={project.id} />
+            <ConfirmSubmitButton message={`Supprimer le projet « ${project.name} » ? Ses checklists, ses activités et ses documents seront supprimés. Ses tâches seront conservées.`} variant="ghost" className="text-red-600">Supprimer le projet</ConfirmSubmitButton>
+          </form>
         </div>
       </div>
 

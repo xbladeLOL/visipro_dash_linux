@@ -1,6 +1,7 @@
 "use server";
 
 import { Priority, ProjectStatus } from "@prisma/client";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
@@ -20,5 +21,13 @@ export async function createProject(formData: FormData) {
     }
   });
 
+  redirect("/projects");
+}
+
+export async function deleteProject(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  await prisma.project.delete({ where: { id } });
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
   redirect("/projects");
 }
