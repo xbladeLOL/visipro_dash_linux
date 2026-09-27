@@ -14,21 +14,22 @@ export default async function ProspectCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
         <div>
           <h1 className="text-3xl font-semibold">Catégories de prospects</h1>
           <p className="text-muted-foreground">Secteurs utilisés pour classer et filtrer les prospects.</p>
         </div>
-        <Link href="/commercial/prospects" className="inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted">← Retour aux prospects</Link>
+        <Link href="/commercial/prospects" className="inline-flex h-11 w-full items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted lg:h-10 lg:w-auto">← Retour aux prospects</Link>
       </div>
       <Card>
         <h2 className="font-semibold">Nouvelle catégorie</h2>
-        <form action={addProspectCategory} className="mt-4 flex flex-wrap gap-2">
-          <Input name="name" placeholder="Nom de la catégorie" required className="max-w-xs" />
-          <Button variant="secondary">Ajouter</Button>
+        <form action={addProspectCategory} className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <Input name="name" placeholder="Nom de la catégorie" required className="w-full sm:max-w-xs" />
+          <Button variant="secondary" className="h-11 shrink-0 sm:h-10">Ajouter</Button>
         </form>
       </Card>
       <Card className="overflow-x-auto">
+        <div className="hidden lg:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground">
@@ -58,7 +59,30 @@ export default async function ProspectCategoriesPage() {
             ))}
           </tbody>
         </table>
-        {categories.length === 0 ? <div className="p-8 text-center text-sm text-muted-foreground">Aucune catégorie. Ajoutez-en une pour apparaître dans le formulaire de prospect.</div> : null}
+        </div>
+        <div className="space-y-3 lg:hidden">
+          {categories.length === 0 ? <div className="p-6 text-center text-sm text-muted-foreground">Aucune catégorie. Ajoutez-en une pour apparaître dans le formulaire de prospect.</div> : null}
+          {categories.map((category) => (
+            <div key={category.id} className="rounded-xl border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 font-medium">{category.name}</div>
+                <span className="shrink-0 text-xs text-muted-foreground">{category._count.prospects} prospect(s)</span>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <form action={renameProspectCategory} className="flex min-w-0 flex-1 items-center gap-2">
+                  <input type="hidden" name="id" value={category.id} />
+                  <Input name="name" defaultValue={category.name} required className="h-11 min-w-0 flex-1" />
+                  <button className="h-11 shrink-0 rounded-lg border px-3 text-sm hover:bg-muted">OK</button>
+                </form>
+                <form action={deleteProspectCategory} className="shrink-0">
+                  <input type="hidden" name="id" value={category.id} />
+                  <ConfirmSubmitButton message={`Supprimer la catégorie « ${category.name} » ? Les prospects seront conservés sans catégorie.`} variant="ghost" className="h-11 px-3 text-sm text-red-600">Supprimer</ConfirmSubmitButton>
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
+        {categories.length === 0 ? <div className="hidden p-8 text-center text-sm text-muted-foreground lg:block">Aucune catégorie. Ajoutez-en une pour apparaître dans le formulaire de prospect.</div> : null}
       </Card>
     </div>
   );

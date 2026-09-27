@@ -16,7 +16,7 @@ export default async function ResultPage() {
         <h1 className="text-3xl font-semibold">Compte de résultat</h1>
         <p className="text-muted-foreground">Vue simplifiée issue des transactions saisies.</p>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <h2 className="text-sm text-muted-foreground">Chiffre d&apos;affaires</h2>
           <p className="mt-2 text-2xl font-semibold">{formatCurrency(revenue)}</p>
@@ -34,9 +34,9 @@ export default async function ResultPage() {
         <h2 className="font-semibold">Dépenses par catégorie</h2>
         <div className="mt-4 space-y-2">
           {[...byCategory.entries()].map(([name, value]) => (
-            <div key={name} className="flex justify-between border-b py-2 text-sm">
-              <span>{name}</span>
-              <span>-{formatCurrency(value)}</span>
+            <div key={name} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b py-2 text-sm">
+              <span className="min-w-0 break-words">{name}</span>
+              <span className="shrink-0">-{formatCurrency(value)}</span>
             </div>
           ))}
         </div>

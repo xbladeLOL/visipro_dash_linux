@@ -26,7 +26,7 @@ export default async function DashboardPage() {
         {cards.map(([label, value, helper]) => (
           <Card key={label}>
             <CardTitle>{label}</CardTitle>
-            <div className="mt-3 text-2xl font-semibold">{value}</div>
+            <div className="mt-3 break-words text-xl font-semibold sm:text-2xl">{value}</div>
             <div className="mt-1 text-sm text-muted-foreground">{helper}</div>
           </Card>
         ))}

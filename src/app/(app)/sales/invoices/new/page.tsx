@@ -14,12 +14,12 @@ export default async function NewInvoicePage() {
         <p className="text-muted-foreground">Crée une facture brouillon avec une première ligne.</p>
       </div>
       <Card>
-        <form action={createInvoice} className="grid gap-4 md:grid-cols-2">
-          <select name="clientId" className="h-10 rounded-lg border bg-card px-3 text-sm" required>
+        <form action={createInvoice} className="grid gap-4 lg:grid-cols-2">
+          <select name="clientId" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10" required>
             <option value="">Client</option>
             {clients.map((client) => <option key={client.id} value={client.id}>{client.legalName}</option>)}
           </select>
-          <select name="serviceId" className="h-10 rounded-lg border bg-card px-3 text-sm">
+          <select name="serviceId" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10">
             <option value="">Service</option>
             {services.map((service) => <option key={service.id} value={service.id}>{service.name}</option>)}
           </select>
@@ -29,7 +29,7 @@ export default async function NewInvoicePage() {
           <Input name="taxRate" type="number" step="0.01" defaultValue="20" placeholder="TVA %" />
           <Input name="paymentDelay" type="number" defaultValue="30" placeholder="Délai paiement jours" />
           <Textarea name="notes" placeholder="Notes" />
-          <Button className="md:col-span-2">Créer la facture</Button>
+          <Button className="lg:col-span-2">Créer la facture</Button>
         </form>
       </Card>
     </div>

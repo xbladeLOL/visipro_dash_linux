@@ -16,7 +16,7 @@ export default async function NewProspectPage() {
         <p className="text-muted-foreground">Ajoute une opportunité au CRM VisiPro.</p>
       </div>
       <Card>
-        <form action={createProspect} className="grid gap-4 md:grid-cols-2">
+        <form action={createProspect} className="grid gap-4 lg:grid-cols-2">
           <Input name="companyName" placeholder="Entreprise" required />
           <Input name="contactName" placeholder="Nom du contact" />
           <Input name="email" type="email" placeholder="Email" />
@@ -25,18 +25,18 @@ export default async function NewProspectPage() {
           <Input name="city" placeholder="Ville" />
           <Input name="source" placeholder="Source" />
           <Input name="activity" placeholder="Activité" />
-          <select name="categoryId" className="h-10 rounded-lg border bg-card px-3 text-sm">
+          <select name="categoryId" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10">
             <option value="">Catégorie</option>
             {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
           </select>
           <Input name="potentialValue" type="number" step="0.01" placeholder="Valeur potentielle" />
-          <select name="stage" className="h-10 rounded-lg border bg-card px-3 text-sm">
+          <select name="stage" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10">
             {Object.values(ProspectStage).map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}
           </select>
           <Input name="nextAction" placeholder="Prochaine action" />
           <Input name="nextFollowUpAt" type="date" />
-          <Textarea name="notes" placeholder="Notes" className="md:col-span-2" />
-          <Button className="md:col-span-2">Créer le prospect</Button>
+          <Textarea name="notes" placeholder="Notes" className="lg:col-span-2" />
+          <Button className="lg:col-span-2">Créer le prospect</Button>
         </form>
       </Card>
     </div>

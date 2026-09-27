@@ -11,7 +11,7 @@ export default function NewClientPage() {
         <p className="text-muted-foreground">Crée une fiche client exploitable pour projets, devis et factures.</p>
       </div>
       <Card>
-        <form action={createClient} className="grid gap-4 md:grid-cols-2">
+        <form action={createClient} className="grid gap-4 lg:grid-cols-2">
           <Input name="legalName" placeholder="Raison sociale / nom" required />
           <Input name="tradeName" placeholder="Nom commercial" />
           <Input name="contactName" placeholder="Contact principal" />
@@ -22,7 +22,7 @@ export default function NewClientPage() {
           <Input name="vatNumber" placeholder="TVA intracommunautaire" />
           <Textarea name="address" placeholder="Adresse" />
           <Textarea name="notes" placeholder="Notes" />
-          <Button className="md:col-span-2">Créer le client</Button>
+          <Button className="lg:col-span-2">Créer le client</Button>
         </form>
       </Card>
     </div>

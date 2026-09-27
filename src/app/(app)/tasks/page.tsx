@@ -10,14 +10,15 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
         <div>
           <h1 className="text-3xl font-semibold">Tâches</h1>
           <p className="text-muted-foreground">Aujourd&apos;hui, semaine, retard et toutes les tâches.</p>
         </div>
-        <Link href="/tasks/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouvelle tâche</Link>
+        <Link href="/tasks/new" className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90 lg:h-10 lg:w-auto">+ Nouvelle tâche</Link>
       </div>
       <Card className="overflow-x-auto">
+        <div className="hidden lg:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground">
@@ -53,6 +54,33 @@ export default async function TasksPage() {
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="space-y-3 lg:hidden">
+          {tasks.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">Aucune tâche.</p> : null}
+          {tasks.map((task) => (
+            <div key={task.id} className="rounded-xl border p-3">
+              <div className="font-medium">{task.title}</div>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                <span>{task.client?.legalName ?? task.project?.name ?? "-"}</span>
+                <span className="text-xs">{formatPriority(task.priority)}</span>
+                <span className="rounded-full border px-2 py-0.5 text-xs">{formatTaskStatus(task.status)}</span>
+                {task.dueDate ? <span className="text-xs">{task.dueDate.toLocaleDateString("fr-FR")}</span> : null}
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                {task.status !== "DONE" ? (
+                  <form action={completeTask} className="min-w-0 flex-1">
+                    <input type="hidden" name="id" value={task.id} />
+                    <button className="h-11 w-full rounded-lg border px-3 text-sm hover:bg-muted">Terminer</button>
+                  </form>
+                ) : null}
+                <form action={deleteTask} className="min-w-0 flex-1">
+                  <input type="hidden" name="id" value={task.id} />
+                  <ConfirmSubmitButton message="Supprimer cette tâche ?" variant="ghost" className="h-11 w-full px-3 text-sm text-red-600">Supprimer</ConfirmSubmitButton>
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );

@@ -28,15 +28,15 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
         <div><h1 className="text-3xl font-semibold">Prospects</h1><p className="text-muted-foreground">CRM, pipeline et relances commerciales.</p></div>
-        <div className="flex gap-2">
-          <Link href="/commercial/prospects/categories" className="inline-flex h-10 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted">Catégories</Link>
-          <Link href="/commercial/prospects/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link>
+        <div className="flex w-full flex-wrap gap-2 lg:w-auto">
+          <Link href="/commercial/prospects/categories" className="inline-flex h-11 flex-1 items-center justify-center rounded-lg border px-4 text-sm font-medium hover:bg-muted lg:h-10 lg:flex-none">Catégories</Link>
+          <Link href="/commercial/prospects/new" className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90 lg:h-10 lg:flex-none">+ Nouveau prospect</Link>
         </div>
       </div>
       <Card>
-        <form action={createProspect} className="grid gap-3 md:grid-cols-4">
+        <form action={createProspect} className="grid gap-3 lg:grid-cols-4">
           <Input name="companyName" placeholder="Entreprise" required />
           <Input name="contactName" placeholder="Contact" />
           <Input name="email" type="email" placeholder="Email" />
@@ -44,12 +44,12 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
           <Input name="city" placeholder="Ville" />
           <Input name="source" placeholder="Source" />
           <Input name="activity" placeholder="Activité" />
-          <select name="categoryId" className="h-10 rounded-lg border bg-card px-3 text-sm"><option value="">Catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
+          <select name="categoryId" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10"><option value="">Catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
           <Input name="potentialValue" type="number" step="0.01" placeholder="Valeur potentielle" />
-          <select name="stage" className="h-10 rounded-lg border bg-card px-3 text-sm">{stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}</select>
-          <Textarea name="notes" placeholder="Notes" className="md:col-span-2" />
+          <select name="stage" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10">{stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}</select>
+          <Textarea name="notes" placeholder="Notes" className="lg:col-span-2" />
           <Input name="nextAction" placeholder="Prochaine action" />
-          <Button className="md:col-span-4">Créer le prospect</Button>
+          <Button className="lg:col-span-4">Créer le prospect</Button>
         </form>
       </Card>
       <div className="grid gap-4 xl:grid-cols-4">
@@ -70,17 +70,18 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
         ))}
       </div>
       <Card className="overflow-x-auto">
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col items-start justify-between gap-3 lg:flex-row lg:items-center lg:gap-4">
           <div>
             <h2 className="font-semibold">Tous les prospects</h2>
             <p className="text-sm text-muted-foreground">Vue tableau pour modifier le pipeline ou supprimer une fiche.</p>
           </div>
-          <form className="flex flex-wrap gap-2">
+          <form className="flex w-full flex-wrap gap-2 lg:w-auto">
             <Input name="q" placeholder="Rechercher" defaultValue={params.q ?? ""} />
-            <select name="category" defaultValue={params.category ?? ""} className="h-10 rounded-lg border bg-card px-3 text-sm"><option value="">Catégorie : Toutes</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
+            <select name="category" defaultValue={params.category ?? ""} className="h-11 min-w-0 flex-1 rounded-lg border bg-card px-3 text-sm lg:h-10 lg:flex-none"><option value="">Catégorie : Toutes</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
             <Button variant="secondary">Filtrer</Button>
           </form>
         </div>
+        <div className="hidden lg:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground">
@@ -122,6 +123,37 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
             ))}
           </tbody>
         </table>
+        </div>
+        <div className="space-y-3 lg:hidden">
+          {prospects.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">Aucun prospect ne correspond aux filtres.</p> : null}
+          {prospects.map((prospect) => (
+            <div key={prospect.id} className="rounded-xl border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <Link href={`/commercial/prospects/${prospect.id}`} className="min-w-0 font-medium hover:underline">{prospect.companyName}</Link>
+                <div className="shrink-0 text-right font-medium">{formatCurrency(Number(prospect.potentialValue))}</div>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                {prospect.category ? <span className="rounded-full border px-2 py-0.5 text-xs">{prospect.category.name}</span> : null}
+                {prospect.city ? <span className="text-xs">{prospect.city}</span> : null}
+                {prospect.contactName ? <span className="truncate text-xs">{prospect.contactName}</span> : null}
+              </div>
+              {prospect.nextAction ? <div className="mt-2 text-sm"><span className="text-muted-foreground">Prochaine action : </span>{prospect.nextAction}</div> : null}
+              <div className="mt-3 flex items-center gap-2">
+                <form action={updateProspectStage} className="flex min-w-0 flex-1 items-center gap-2">
+                  <input type="hidden" name="id" value={prospect.id} />
+                  <select name="stage" defaultValue={prospect.stage} className="h-11 min-w-0 flex-1 rounded-lg border bg-card px-2 text-sm">
+                    {stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}
+                  </select>
+                  <button className="h-11 shrink-0 rounded-lg border px-3 text-sm hover:bg-muted">OK</button>
+                </form>
+                <form action={deleteProspect} className="shrink-0">
+                  <input type="hidden" name="id" value={prospect.id} />
+                  <ConfirmSubmitButton message="Supprimer ce prospect ?" variant="ghost" className="h-11 px-3 text-sm text-red-600">Supprimer</ConfirmSubmitButton>
+                </form>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );
