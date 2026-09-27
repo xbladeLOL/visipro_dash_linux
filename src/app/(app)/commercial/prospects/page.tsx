@@ -3,8 +3,8 @@ import { ProspectStage } from "@prisma/client";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/input";
-import { createProspect, deleteProspect, updateProspectStage } from "@/features/prospects/actions";
+import { Input } from "@/components/ui/input";
+import { deleteProspect, updateProspectStage } from "@/features/prospects/actions";
 import { formatProspectStage } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
@@ -35,23 +35,6 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
           <Link href="/commercial/prospects/new" className="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90 lg:h-10 lg:flex-none">+ Nouveau prospect</Link>
         </div>
       </div>
-      <Card>
-        <form action={createProspect} className="grid gap-3 lg:grid-cols-4">
-          <Input name="companyName" placeholder="Entreprise" required />
-          <Input name="contactName" placeholder="Contact" />
-          <Input name="email" type="email" placeholder="Email" />
-          <Input name="phone" placeholder="Téléphone" />
-          <Input name="city" placeholder="Ville" />
-          <Input name="source" placeholder="Source" />
-          <Input name="activity" placeholder="Activité" />
-          <select name="categoryId" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10"><option value="">Catégorie</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select>
-          <Input name="potentialValue" type="number" step="0.01" placeholder="Valeur potentielle" />
-          <select name="stage" className="h-11 w-full min-w-0 rounded-lg border bg-card px-3 text-sm lg:h-10">{stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}</select>
-          <Textarea name="notes" placeholder="Notes" className="lg:col-span-2" />
-          <Input name="nextAction" placeholder="Prochaine action" />
-          <Button className="lg:col-span-4">Créer le prospect</Button>
-        </form>
-      </Card>
       <div className="grid gap-4 xl:grid-cols-4">
         {stages.map((stage) => (
           <Card key={stage} className="p-3">
