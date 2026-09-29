@@ -11,7 +11,9 @@ cleanup() {
   if [[ -n "${DASHBOARD_PID}" ]] && kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
     echo
     echo "Arrêt du dashboard..."
-    kill "${DASHBOARD_PID}" 2>/dev/null || true
+    # Next.js est lancé dans un groupe de processus dédié. Arrêter le groupe
+    # évite de laisser le processus enfant `next start` occuper le port.
+    kill -- "-${DASHBOARD_PID}" 2>/dev/null || kill "${DASHBOARD_PID}" 2>/dev/null || true
     wait "${DASHBOARD_PID}" 2>/dev/null || true
   fi
 }
@@ -28,6 +30,11 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v setsid >/dev/null 2>&1; then
+  echo "Erreur : setsid (paquet util-linux) est nécessaire pour gérer proprement le processus dashboard." >&2
+  exit 1
+fi
+
 if [[ ! -f .env ]]; then
   echo "Erreur : le fichier .env est manquant." >&2
   exit 1
@@ -39,7 +46,9 @@ if [[ ! -f .next/BUILD_ID ]]; then
 fi
 
 echo "Démarrage du dashboard sur ${DASHBOARD_URL}..."
-PORT="${PORT}" npm run start &
+# Ne pas passer par `npm run start`, qui crée un processus enfant pouvant
+# survivre à npm. `setsid` crée un groupe que cleanup arrête entièrement.
+PORT="${PORT}" setsid node node_modules/next/dist/bin/next start &
 DASHBOARD_PID=$!
 
 for _ in {1..30}; do
@@ -58,6 +67,12 @@ done
 
 if ! curl --silent --fail --output /dev/null "${DASHBOARD_URL}"; then
   echo "Erreur : le dashboard ne répond pas après 30 secondes." >&2
+  exit 1
+fi
+
+if ! kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
+  wait "${DASHBOARD_PID}" || true
+  echo "Erreur : un autre programme répond sur ${DASHBOARD_URL}, mais le nouveau dashboard n'a pas démarré." >&2
   exit 1
 fi
 

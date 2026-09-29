@@ -1,9 +1,10 @@
 import { DetectionRefresh } from "@/components/detection-refresh";
 import { ElapsedTime } from "@/components/elapsed-time";
+import { ScanForm } from "@/components/scan-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { importDetectedProspect, rejectDetectedProspect, startScan, suppressDetectedProspect } from "@/features/detection/actions";
+import { importDetectedProspect, rejectDetectedProspect, suppressDetectedProspect } from "@/features/detection/actions";
 import { getDetectionData, getEngineJob, type EngineBusiness, type EngineJob } from "@/lib/prospect-engine";
 
 const tierLabel:Record<string,string>={PRIORITAIRE:"Prioritaire",TRES_BON:"Très bon",BON:"Bon",A_VERIFIER:"À vérifier",FAIBLE:"Faible",REJET:"Rejet"};
@@ -33,7 +34,7 @@ export default async function DetectionPage({searchParams}:{searchParams:Promise
     {(params.error||connectionError)&&<Card className="border-red-200 bg-red-50 text-red-800"><strong>Connexion impossible :</strong> {params.error??connectionError}<div className="mt-1 text-sm">Vérifiez PROSPECT_ENGINE_URL, PROSPECT_ENGINE_API_KEY et le service Docker.</div></Card>}
     {params.scan&&!scan&&<Card className="border-emerald-200 bg-emerald-50 text-emerald-800">Scan lancé. Chargement de son état…</Card>}
     {scan&&<ScanProgress scan={scan}/>} 
-    <Card><h2 className="mb-4 font-semibold">Lancer un nouveau scan</h2><form action={startScan} className="grid gap-3 md:grid-cols-4"><Input name="query" placeholder="Métier : électricien" required/><Input name="city" placeholder="Ville : Orléans" required/><Input name="limit" type="number" min="1" max="100" defaultValue="30"/><Button disabled={!data}>Lancer la recherche</Button></form></Card>
+    <Card><h2 className="mb-4 font-semibold">Lancer un nouveau scan</h2>{data?<ScanForm options={data.options}/>:<ScanForm options={{zones:[],categories:[]}} disabled/>}</Card>
     {data&&<><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[["Détectés",data.stats.total],["À vérifier",data.stats.review],["En attente",data.jobs.pending],["Analyses actives",data.jobs.analyzing]].map(([label,value])=><Card key={String(label)}><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p></Card>)}</div>
       <Card><form className="flex flex-col gap-3 sm:flex-row"><Input name="city" placeholder="Filtrer par ville" defaultValue={params.city}/><Input name="minScore" type="number" min="0" max="100" placeholder="Score minimum" defaultValue={params.minScore}/><Button variant="secondary">Filtrer</Button></form></Card>
       <RecentActivity jobs={data.recentJobs}/>

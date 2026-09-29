@@ -9,6 +9,7 @@ export type EngineBusiness = {
 export type EngineStats = { total: number; review: number; approved: number; rejected: number };
 export type JobSummary = { pending: number; running: number; completed: number; failed: number; discovering: number; analyzing: number };
 export type EngineJob = { id:string; type:string; status:string; attempts:number; max_attempts:number; last_error?:string; payload?:Record<string,unknown>; created_at:string; started_at?:string; completed_at?:string; children?:{total:number;pending:number;running:number;completed:number;failed:number}; discovery?:{found:number;new:number;status:string;error?:string;startedAt:string;completedAt?:string} };
+export type SearchOptions = { zones:{id:string;name:string;country_code:string;radius_km:number}[]; categories:{id:string;slug:string;label:string;query_terms:string[];lead_value_score:number}[] };
 
 function config() {
   const url = process.env.PROSPECT_ENGINE_URL?.replace(/\/$/, "");
@@ -28,11 +29,11 @@ export async function getDetectionData(filters: { city?: string; minScore?: stri
   const params = new URLSearchParams({ limit: "100" });
   if (filters.city) params.set("city", filters.city);
   if (filters.minScore) params.set("minScore", filters.minScore);
-  const [stats, jobs, businesses, recentJobs] = await Promise.all([
+  const [stats, jobs, businesses, recentJobs, options] = await Promise.all([
     engineFetch<EngineStats>("/v1/stats"), engineFetch<JobSummary>("/v1/jobs-summary"),
-    engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12")
+    engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12"), engineFetch<SearchOptions>("/v1/search-options")
   ]);
-  return { stats, jobs, businesses: businesses.items, recentJobs:recentJobs.items };
+  return { stats, jobs, businesses: businesses.items, recentJobs:recentJobs.items, options };
 }
 
 export async function startEngineScan(input: { query: string; city: string; limit: number }) {
