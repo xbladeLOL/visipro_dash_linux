@@ -10,8 +10,10 @@ export async function startScan(formData: FormData) {
   const query=String(formData.get("query") ?? "").trim(); const city=String(formData.get("city") ?? "").trim();
   const limit=Math.max(1,Math.min(100,Number(formData.get("limit") ?? 30)));
   if (!query || !city) redirect(`${detectionPath}?error=${encodeURIComponent("Métier et ville obligatoires")}`);
-  try { const result=await startEngineScan({query,city,limit}); redirect(`${detectionPath}?scan=${result.jobId}`); }
+  let jobId:string;
+  try { jobId=(await startEngineScan({query,city,limit})).jobId; }
   catch(error) { redirect(`${detectionPath}?error=${encodeURIComponent(error instanceof Error ? error.message : "Erreur inconnue")}`); }
+  redirect(`${detectionPath}?scan=${jobId}`);
 }
 
 export async function importDetectedProspect(formData: FormData) {

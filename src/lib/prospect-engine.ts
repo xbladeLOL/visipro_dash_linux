@@ -8,6 +8,7 @@ export type EngineBusiness = {
 };
 export type EngineStats = { total: number; review: number; approved: number; rejected: number };
 export type JobSummary = { pending: number; running: number; completed: number; failed: number; discovering: number; analyzing: number };
+export type EngineJob = { id:string; type:string; status:string; attempts:number; max_attempts:number; last_error?:string; payload?:Record<string,unknown>; created_at:string; started_at?:string; completed_at?:string; children?:{total:number;pending:number;running:number;completed:number;failed:number}; discovery?:{found:number;new:number;status:string;error?:string;startedAt:string;completedAt?:string} };
 
 function config() {
   const url = process.env.PROSPECT_ENGINE_URL?.replace(/\/$/, "");
@@ -27,11 +28,11 @@ export async function getDetectionData(filters: { city?: string; minScore?: stri
   const params = new URLSearchParams({ limit: "100" });
   if (filters.city) params.set("city", filters.city);
   if (filters.minScore) params.set("minScore", filters.minScore);
-  const [stats, jobs, businesses] = await Promise.all([
+  const [stats, jobs, businesses, recentJobs] = await Promise.all([
     engineFetch<EngineStats>("/v1/stats"), engineFetch<JobSummary>("/v1/jobs-summary"),
-    engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`)
+    engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12")
   ]);
-  return { stats, jobs, businesses: businesses.items };
+  return { stats, jobs, businesses: businesses.items, recentJobs:recentJobs.items };
 }
 
 export async function startEngineScan(input: { query: string; city: string; limit: number }) {
@@ -40,3 +41,4 @@ export async function startEngineScan(input: { query: string; city: string; limi
 export async function setEngineBusinessStatus(id: string, status: "APPROVED"|"REJECTED"|"DO_NOT_CONTACT", reason?: string) {
   return engineFetch(`/v1/businesses/${id}/status`, { method: "PATCH", body: JSON.stringify({ status, reason }) });
 }
+export async function getEngineJob(id:string){ return engineFetch<EngineJob>(`/v1/jobs/${id}`); }

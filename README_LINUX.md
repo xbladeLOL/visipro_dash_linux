@@ -24,6 +24,7 @@ Le script :
 - démarre/active le service PostgreSQL ;
 - crée l'utilisateur `visipro` et la base `visipro` ;
 - crée `.env` depuis `.env.example` si absent ;
+- demande l'URL et la clé API du moteur de prospection ;
 - installe les dépendances avec `npm ci` ;
 - lance `prisma generate` ;
 - lance `prisma db push`.
@@ -43,6 +44,8 @@ DATABASE_URL="postgresql://visipro:visipro_local_password@localhost:5432/visipro
 AUTH_SECRET="une-valeur-longue-et-secrete"
 AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+PROSPECT_ENGINE_URL="http://127.0.0.1:8080"
+PROSPECT_ENGINE_API_KEY="clé affichée par l'installateur du moteur"
 ```
 
 Générer un secret :
@@ -87,6 +90,12 @@ npm run dev
 ```
 
 Ouvrir : `http://localhost:3000`.
+
+## Prospection automatisée
+
+Installe d'abord `visipro-prospect-engine` avec son fichier `installer.sh`. Copie la clé API affichée à la fin dans `PROSPECT_ENGINE_API_KEY`. Dans le dashboard, ouvre **Commercial → Détection** pour lancer une recherche, suivre son avancement, filtrer les scores et transférer un candidat validé vers le CRM.
+
+Si le dashboard et le moteur tournent sur le même serveur, conserve `PROSPECT_ENGINE_URL=http://127.0.0.1:8080`. La clé reste uniquement côté serveur et n'est jamais exposée au navigateur.
 
 ## Build Production
 
