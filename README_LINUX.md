@@ -97,14 +97,24 @@ npm run build
 ## Lancement Production
 
 ```bash
-npm run start
-```
-
-ou :
-
-```bash
+npm run build
 ./start.sh
 ```
+
+`start.sh` lance ensemble :
+
+- le dashboard Next.js sur le port `3000` ;
+- le tunnel public Tailscale Funnel vers ce même port.
+
+Le script demande le mot de passe `sudo` au moment d'activer Funnel. Laisse le terminal ouvert. `Ctrl+C` arrête le tunnel et le dashboard.
+
+Pour utiliser un autre port :
+
+```bash
+PORT=3003 ./start.sh
+```
+
+Le tunnel est alors automatiquement dirigé vers le port `3003`.
 
 ## Diagnostic
 

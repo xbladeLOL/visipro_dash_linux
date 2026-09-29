@@ -1,4 +1,69 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-npm run start
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
+PORT="${PORT:-3000}"
+DASHBOARD_URL="http://127.0.0.1:${PORT}"
+DASHBOARD_PID=""
+
+cleanup() {
+  if [[ -n "${DASHBOARD_PID}" ]] && kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
+    echo
+    echo "Arrêt du dashboard..."
+    kill "${DASHBOARD_PID}" 2>/dev/null || true
+    wait "${DASHBOARD_PID}" 2>/dev/null || true
+  fi
+}
+
+trap cleanup EXIT INT TERM
+
+if ! command -v tailscale >/dev/null 2>&1; then
+  echo "Erreur : Tailscale n'est pas installé ou n'est pas dans le PATH." >&2
+  exit 1
+fi
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "Erreur : curl est nécessaire pour vérifier le démarrage du dashboard." >&2
+  exit 1
+fi
+
+if [[ ! -f .env ]]; then
+  echo "Erreur : le fichier .env est manquant." >&2
+  exit 1
+fi
+
+if [[ ! -f .next/BUILD_ID ]]; then
+  echo "Aucun build de production trouvé. Lance d'abord : npm run build" >&2
+  exit 1
+fi
+
+echo "Démarrage du dashboard sur ${DASHBOARD_URL}..."
+PORT="${PORT}" npm run start &
+DASHBOARD_PID=$!
+
+for _ in {1..30}; do
+  if curl --silent --fail --output /dev/null "${DASHBOARD_URL}"; then
+    break
+  fi
+
+  if ! kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
+    wait "${DASHBOARD_PID}" || true
+    echo "Erreur : le dashboard s'est arrêté pendant son démarrage." >&2
+    exit 1
+  fi
+
+  sleep 1
+done
+
+if ! curl --silent --fail --output /dev/null "${DASHBOARD_URL}"; then
+  echo "Erreur : le dashboard ne répond pas après 30 secondes." >&2
+  exit 1
+fi
+
+echo "Dashboard prêt. Activation du tunnel public Tailscale Funnel..."
+echo "Laisse ce terminal ouvert. Ctrl+C arrêtera le dashboard et le tunnel."
+echo
+
+# Funnel reste au premier plan : sa fermeture déclenche aussi l'arrêt du dashboard.
+sudo tailscale funnel "${PORT}"
