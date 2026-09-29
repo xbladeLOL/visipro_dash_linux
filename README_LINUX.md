@@ -12,7 +12,7 @@ Le projet n'utilise pas Docker dans cette version clean. `install.sh` peut insta
 ## Installation
 
 ```bash
-chmod +x install.sh check.sh start.sh
+chmod +x install.sh check.sh start.sh stop.sh
 ./install.sh
 ```
 

@@ -6,6 +6,8 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 PORT="${PORT:-3000}"
 DASHBOARD_URL="http://127.0.0.1:${PORT}"
 DASHBOARD_PID=""
+PID_FILE=".visipro-dashboard.pid"
+PORT_FILE=".visipro-dashboard.port"
 
 cleanup() {
   if [[ -n "${DASHBOARD_PID}" ]] && kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
@@ -16,6 +18,7 @@ cleanup() {
     kill -- "-${DASHBOARD_PID}" 2>/dev/null || kill "${DASHBOARD_PID}" 2>/dev/null || true
     wait "${DASHBOARD_PID}" 2>/dev/null || true
   fi
+  rm -f -- "${PID_FILE}" "${PORT_FILE}"
 }
 
 trap cleanup EXIT INT TERM
@@ -50,6 +53,8 @@ echo "Démarrage du dashboard sur ${DASHBOARD_URL}..."
 # survivre à npm. `setsid` crée un groupe que cleanup arrête entièrement.
 PORT="${PORT}" setsid node node_modules/next/dist/bin/next start &
 DASHBOARD_PID=$!
+printf '%s\n' "${DASHBOARD_PID}" > "${PID_FILE}"
+printf '%s\n' "${PORT}" > "${PORT_FILE}"
 
 for _ in {1..30}; do
   if curl --silent --fail --output /dev/null "${DASHBOARD_URL}"; then

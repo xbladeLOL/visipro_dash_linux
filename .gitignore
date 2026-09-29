@@ -3,6 +3,8 @@ node_modules/
 dist/
 coverage/
 .env
+.visipro-dashboard.pid
+.visipro-dashboard.port
 .env.local
 .env.*.local
 *.log
