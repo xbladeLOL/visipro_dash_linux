@@ -2,7 +2,7 @@ import "server-only";
 
 export type EngineBusiness = {
   id: string; name: string; category?: string; city?: string; address?: string;
-  phone?: string; website_url?: string; email?: string; rating?: string | number;
+  phone?: string; website_url?: string; source_url?:string; email?: string; rating?: string | number;
   review_count?: number; status: string; total?: number; tier?: string;
   recommended_offers?: string[];
 };

@@ -19,7 +19,7 @@ export async function startScan(formData: FormData) {
 export async function importDetectedProspect(formData: FormData) {
   const externalId=String(formData.get("id") ?? ""); const source=`VisiPro Detection:${externalId}`;
   const existing=await prisma.prospect.findFirst({where:{source}});
-  if (!existing) await prisma.prospect.create({data:{companyName:String(formData.get("name") ?? "Entreprise"),phone:String(formData.get("phone") ?? "")||null,website:String(formData.get("website") ?? "")||null,email:String(formData.get("email") ?? "")||null,city:String(formData.get("city") ?? "")||null,activity:String(formData.get("category") ?? "")||null,source,stage:"TO_ANALYZE",notes:String(formData.get("notes") ?? "")||null}});
+  if (!existing) await prisma.prospect.create({data:{companyName:String(formData.get("name") ?? "Entreprise"),phone:String(formData.get("phone") ?? "")||null,website:String(formData.get("website") ?? "")||null,email:String(formData.get("email") ?? "")||null,address:String(formData.get("address") ?? "")||null,city:String(formData.get("city") ?? "")||null,activity:String(formData.get("category") ?? "")||null,source,stage:"TO_ANALYZE",notes:String(formData.get("notes") ?? "")||null}});
   await setEngineBusinessStatus(externalId,"APPROVED"); revalidatePath(detectionPath); revalidatePath("/commercial/prospects");
 }
 export async function rejectDetectedProspect(formData: FormData) { await setEngineBusinessStatus(String(formData.get("id")),"REJECTED",String(formData.get("reason") ?? "Rejeté depuis le dashboard")); revalidatePath(detectionPath); }
