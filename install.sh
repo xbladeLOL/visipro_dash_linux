@@ -139,6 +139,27 @@ if grep -q '^DATABASE_URL=' .env; then
 else
   echo "DATABASE_URL=postgresql://${APP_DB_USER}:${APP_DB_PASSWORD}@localhost:5432/${APP_DB_NAME}?schema=public" >> .env
 fi
+if ! grep -q '^PROSPECT_ENGINE_URL=' .env; then
+  ENGINE_URL="${VISIPRO_PROSPECT_ENGINE_URL:-http://127.0.0.1:8080}"
+  if [ -t 0 ]; then
+    read -r -p "URL du moteur de prospection [$ENGINE_URL] : " ENGINE_URL_INPUT
+    ENGINE_URL="${ENGINE_URL_INPUT:-$ENGINE_URL}"
+  fi
+  echo "PROSPECT_ENGINE_URL=$ENGINE_URL" >> .env
+fi
+if ! grep -q '^PROSPECT_ENGINE_API_KEY=' .env; then
+  ENGINE_KEY="${VISIPRO_PROSPECT_ENGINE_API_KEY:-}"
+  if [ -t 0 ] && [ -z "$ENGINE_KEY" ]; then
+    read -r -s -p "Clé API affichée par installer.sh du moteur de prospection : " ENGINE_KEY
+    echo ""
+  fi
+  if [ -n "$ENGINE_KEY" ]; then
+    echo "PROSPECT_ENGINE_API_KEY=$ENGINE_KEY" >> .env
+  else
+    echo "PROSPECT_ENGINE_API_KEY=configure_engine_key" >> .env
+    echo "Attention : renseigne PROSPECT_ENGINE_API_KEY dans .env avant d'utiliser Détection."
+  fi
+fi
 
 step "[5/8] Installation des dépendances npm"
 if [ -f package-lock.json ]; then
