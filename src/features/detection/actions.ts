@@ -7,13 +7,15 @@ import { setEngineBusinessStatus, startEngineScan } from "@/lib/prospect-engine"
 
 const detectionPath = "/commercial/detection";
 export async function startScan(formData: FormData) {
-  const query=String(formData.get("query") ?? "").trim(); const city=String(formData.get("city") ?? "").trim();
+  const customQuery=String(formData.get("query") ?? "").trim(); const city=String(formData.get("city") ?? "").trim();
+  const queries=[...new Set([...formData.getAll("queries").map(String).map(value=>value.trim()).filter(Boolean),...(customQuery?[customQuery]:[])])];
   const limit=Math.max(1,Math.min(100,Number(formData.get("limit") ?? 30)));
-  if (!query || !city) redirect(`${detectionPath}?error=${encodeURIComponent("Métier et ville obligatoires")}`);
-  let jobId:string;
-  try { jobId=(await startEngineScan({query,city,limit})).jobId; }
+  const requireEmail=formData.get("requireEmail")==="true";
+  if (!queries.length || !city) redirect(`${detectionPath}?error=${encodeURIComponent("Au moins un secteur et une ville sont obligatoires")}`);
+  let result:{jobId:string;jobIds:string[];queued:number};
+  try { result=await startEngineScan({queries,city,limit,requireEmail}); }
   catch(error) { redirect(`${detectionPath}?error=${encodeURIComponent(error instanceof Error ? error.message : "Erreur inconnue")}`); }
-  redirect(`${detectionPath}?scan=${jobId}`);
+  redirect(`${detectionPath}?scan=${result.jobId}&batch=${result.queued}${requireEmail?"&hasEmail=true":""}`);
 }
 
 export async function importDetectedProspect(formData: FormData) {

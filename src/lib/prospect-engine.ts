@@ -25,10 +25,11 @@ async function engineFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function getDetectionData(filters: { city?: string; minScore?: string }) {
+export async function getDetectionData(filters: { city?: string; minScore?: string; hasEmail?: string }) {
   const params = new URLSearchParams({ limit: "100" });
   if (filters.city) params.set("city", filters.city);
   if (filters.minScore) params.set("minScore", filters.minScore);
+  if (filters.hasEmail === "true") params.set("hasEmail", "true");
   const [stats, jobs, businesses, recentJobs, options] = await Promise.all([
     engineFetch<EngineStats>("/v1/stats"), engineFetch<JobSummary>("/v1/jobs-summary"),
     engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12"), engineFetch<SearchOptions>("/v1/search-options")
@@ -36,8 +37,8 @@ export async function getDetectionData(filters: { city?: string; minScore?: stri
   return { stats, jobs, businesses: businesses.items, recentJobs:recentJobs.items, options };
 }
 
-export async function startEngineScan(input: { query: string; city: string; limit: number }) {
-  return engineFetch<{ jobId: string }>("/v1/discovery-runs", { method: "POST", body: JSON.stringify(input) });
+export async function startEngineScan(input: { queries: string[]; city: string; limit: number; requireEmail: boolean }) {
+  return engineFetch<{ jobId: string; jobIds: string[]; queued: number }>("/v1/discovery-runs", { method: "POST", body: JSON.stringify(input) });
 }
 export async function setEngineBusinessStatus(id: string, status: "APPROVED"|"REJECTED"|"DO_NOT_CONTACT", reason?: string) {
   return engineFetch(`/v1/businesses/${id}/status`, { method: "PATCH", body: JSON.stringify({ status, reason }) });
