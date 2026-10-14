@@ -7,7 +7,7 @@ PORT_FILE=".visipro-dashboard.port"
 PORT="${PORT:-}"
 
 if [[ -z "${PORT}" && -f "${PORT_FILE}" ]]; then PORT=$(tr -cd '0-9' < "${PORT_FILE}"); fi
-PORT="${PORT:-3000}"
+PORT="${PORT:-3003}"
 
 echo "Arrêt du tunnel Tailscale Funnel..."
 if command -v tailscale >/dev/null 2>&1; then sudo tailscale funnel reset >/dev/null 2>&1 || true; fi

@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
-PORT="${PORT:-3000}"
+PORT="${PORT:-3003}"
 DASHBOARD_URL="http://127.0.0.1:${PORT}"
 DASHBOARD_PID=""
 PID_FILE=".visipro-dashboard.pid"
