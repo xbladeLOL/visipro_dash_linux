@@ -12,7 +12,7 @@ Le projet n'utilise pas Docker dans cette version clean. `install.sh` peut insta
 ## Installation
 
 ```bash
-chmod +x install.sh check.sh start.sh stop.sh
+chmod +x install.sh install-service.sh check.sh start.sh stop.sh
 ./install.sh
 ```
 
@@ -124,6 +124,32 @@ PORT=3000 ./start.sh
 ```
 
 Le tunnel est alors automatiquement dirigé vers le port choisi.
+
+### Fonctionnement permanent après déconnexion SSH
+
+Pour installer le dashboard comme service système permanent :
+
+```bash
+chmod +x install-service.sh start.sh stop.sh
+npm run build
+./install-service.sh
+```
+
+Cette installation n'est à faire qu'une seule fois. Le dashboard :
+
+- continue de fonctionner après fermeture du terminal ou déconnexion SSH ;
+- redémarre automatiquement en cas d'arrêt inattendu ;
+- redémarre automatiquement avec le serveur ;
+- utilise le port `3003` et Tailscale Funnel en arrière-plan.
+
+Commandes utiles après installation :
+
+```bash
+./start.sh
+./stop.sh
+sudo systemctl status visipro-dashboard.service
+journalctl -u visipro-dashboard.service -f
+```
 
 ## Diagnostic
 

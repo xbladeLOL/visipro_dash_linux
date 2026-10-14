@@ -5,6 +5,12 @@ cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 PID_FILE=".visipro-dashboard.pid"
 PORT_FILE=".visipro-dashboard.port"
 PORT="${PORT:-}"
+SERVICE_NAME="visipro-dashboard.service"
+
+if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files "${SERVICE_NAME}" --no-legend 2>/dev/null | grep -q "^${SERVICE_NAME}"; then
+  echo "Arrêt du service VisiPro..."
+  sudo systemctl stop "${SERVICE_NAME}"
+fi
 
 if [[ -z "${PORT}" && -f "${PORT_FILE}" ]]; then PORT=$(tr -cd '0-9' < "${PORT_FILE}"); fi
 PORT="${PORT:-3003}"

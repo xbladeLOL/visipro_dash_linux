@@ -8,6 +8,16 @@ DASHBOARD_URL="http://127.0.0.1:${PORT}"
 DASHBOARD_PID=""
 PID_FILE=".visipro-dashboard.pid"
 PORT_FILE=".visipro-dashboard.port"
+SERVICE_NAME="visipro-dashboard.service"
+
+if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files "${SERVICE_NAME}" --no-legend 2>/dev/null | grep -q "^${SERVICE_NAME}"; then
+  echo "Démarrage du service VisiPro sur le port 3003..."
+  sudo systemctl start "${SERVICE_NAME}"
+  sudo tailscale funnel --bg 3003
+  echo "Dashboard et tunnel démarrés en arrière-plan. Tu peux fermer le terminal."
+  echo "État : sudo systemctl status ${SERVICE_NAME}"
+  exit 0
+fi
 
 cleanup() {
   if [[ -n "${DASHBOARD_PID}" ]] && kill -0 "${DASHBOARD_PID}" 2>/dev/null; then
