@@ -11,11 +11,12 @@ export async function startScan(formData: FormData) {
   const queries=[...new Set([...formData.getAll("queries").map(String).map(value=>value.trim()).filter(Boolean),...(customQuery?[customQuery]:[])])];
   const limit=Math.max(1,Math.min(100,Number(formData.get("limit") ?? 30)));
   const requireEmail=formData.get("requireEmail")==="true";
+  const requireWebsite=formData.get("requireWebsite")==="true";
   if (!queries.length || !city) redirect(`${detectionPath}?error=${encodeURIComponent("Au moins un secteur et une ville sont obligatoires")}`);
   let result:{jobId:string;jobIds:string[];queued:number};
   try { result=await startEngineScan({queries,city,limit,requireEmail}); }
   catch(error) { redirect(`${detectionPath}?error=${encodeURIComponent(error instanceof Error ? error.message : "Erreur inconnue")}`); }
-  redirect(`${detectionPath}?scan=${result.jobId}&batch=${result.queued}${requireEmail?"&hasEmail=true":""}`);
+  redirect(`${detectionPath}?scan=${result.jobId}&batch=${result.queued}${requireEmail?"&hasEmail=true":""}${requireWebsite?"&hasWebsite=true":""}`);
 }
 
 export async function importDetectedProspect(formData: FormData) {

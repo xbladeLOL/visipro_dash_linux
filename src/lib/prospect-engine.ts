@@ -25,16 +25,34 @@ async function engineFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function getDetectionData(filters: { city?: string; minScore?: string; hasEmail?: string }) {
-  const params = new URLSearchParams({ limit: "100" });
-  if (filters.city) params.set("city", filters.city);
-  if (filters.minScore) params.set("minScore", filters.minScore);
-  if (filters.hasEmail === "true") params.set("hasEmail", "true");
-  const [stats, jobs, businesses, recentJobs, options] = await Promise.all([
+async function getAllReviewBusinesses(filters: { city?: string; minScore?: string; hasEmail?: string }) {
+  const pageSize = 100;
+  const items: EngineBusiness[] = [];
+  let offset = 0;
+
+  while (true) {
+    const params = new URLSearchParams({ status: "REVIEW", limit: String(pageSize), offset: String(offset) });
+    if (filters.city) params.set("city", filters.city);
+    if (filters.minScore) params.set("minScore", filters.minScore);
+    if (filters.hasEmail === "true") params.set("hasEmail", "true");
+    const page = await engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`);
+    items.push(...page.items);
+    if (page.items.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return items;
+}
+
+export async function getDetectionData(filters: { city?: string; minScore?: string; hasEmail?: string; hasWebsite?: string }) {
+  const [stats, jobs, allBusinesses, recentJobs, options] = await Promise.all([
     engineFetch<EngineStats>("/v1/stats"), engineFetch<JobSummary>("/v1/jobs-summary"),
-    engineFetch<{ items: EngineBusiness[] }>(`/v1/businesses?${params}`), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12"), engineFetch<SearchOptions>("/v1/search-options")
+    getAllReviewBusinesses(filters), engineFetch<{items:EngineJob[]}>("/v1/jobs?limit=12"), engineFetch<SearchOptions>("/v1/search-options")
   ]);
-  return { stats, jobs, businesses: businesses.items, recentJobs:recentJobs.items, options };
+  const businesses = filters.hasWebsite === "true"
+    ? allBusinesses.filter((business) => Boolean(business.website_url?.trim()))
+    : allBusinesses;
+  return { stats, jobs, businesses, recentJobs:recentJobs.items, options };
 }
 
 export async function startEngineScan(input: { queries: string[]; city: string; limit: number; requireEmail: boolean }) {

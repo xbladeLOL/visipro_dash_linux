@@ -27,9 +27,9 @@ function ProspectCard({business}: {business:EngineBusiness}) {
   </Card>;
 }
 
-export default async function DetectionPage({searchParams}:{searchParams:Promise<{city?:string;minScore?:string;hasEmail?:string;error?:string;scan?:string;batch?:string}>}) {
+export default async function DetectionPage({searchParams}:{searchParams:Promise<{city?:string;minScore?:string;hasEmail?:string;hasWebsite?:string;error?:string;scan?:string;batch?:string}>}) {
   const params=await searchParams; let data; let scan:EngineJob|undefined; let connectionError:string|undefined;
-  try { [data,scan]=await Promise.all([getDetectionData({city:params.city,minScore:params.minScore,hasEmail:params.hasEmail}),params.scan?getEngineJob(params.scan):Promise.resolve(undefined)]); } catch(error) { connectionError=error instanceof Error?error.message:"Moteur indisponible"; }
+  try { [data,scan]=await Promise.all([getDetectionData({city:params.city,minScore:params.minScore,hasEmail:params.hasEmail,hasWebsite:params.hasWebsite}),params.scan?getEngineJob(params.scan):Promise.resolve(undefined)]); } catch(error) { connectionError=error instanceof Error?error.message:"Moteur indisponible"; }
   const scanActive=Boolean(scan&&(scan.status==="PENDING"||scan.status==="RUNNING"||(scan.children?.pending??0)>0||(scan.children?.running??0)>0));
   const active=Boolean(scanActive||(data && (data.jobs.pending>0||data.jobs.running>0)));
   return <div className="space-y-6">
@@ -40,9 +40,10 @@ export default async function DetectionPage({searchParams}:{searchParams:Promise
     {scan&&<ScanProgress scan={scan}/>} 
     <Card><h2 className="mb-4 font-semibold">Lancer un nouveau scan</h2>{data?<ScanForm options={data.options}/>:<ScanForm options={{zones:[],categories:[]}} disabled/>}</Card>
     {data&&<><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[["Détectés",data.stats.total],["À vérifier",data.stats.review],["En attente",data.jobs.pending],["Analyses actives",data.jobs.analyzing]].map(([label,value])=><Card key={String(label)}><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p></Card>)}</div>
-      <Card><form className="flex flex-col gap-3 sm:flex-row sm:items-center"><Input name="city" placeholder="Filtrer par ville" defaultValue={params.city}/><Input name="minScore" type="number" min="0" max="100" placeholder="Score minimum" defaultValue={params.minScore}/><label className="flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border px-3 text-sm"><input type="checkbox" name="hasEmail" value="true" defaultChecked={params.hasEmail==="true"}/>Avec email uniquement</label><Button variant="secondary">Filtrer</Button></form></Card>
+      <Card><form className="flex flex-col gap-3 lg:flex-row lg:items-center"><Input name="city" placeholder="Filtrer par ville" defaultValue={params.city}/><Input name="minScore" type="number" min="0" max="100" placeholder="Score minimum" defaultValue={params.minScore}/><label className="flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border px-3 text-sm"><input type="checkbox" name="hasEmail" value="true" defaultChecked={params.hasEmail==="true"}/>Avec email uniquement</label><label className="flex min-h-10 items-center gap-2 whitespace-nowrap rounded-lg border px-3 text-sm"><input type="checkbox" name="hasWebsite" value="true" defaultChecked={params.hasWebsite==="true"}/>Avec site web uniquement</label><Button variant="secondary">Filtrer</Button></form></Card>
       <RecentActivity jobs={data.recentJobs}/>
-      <div className="grid gap-4 xl:grid-cols-2">{data.businesses.filter(x=>x.status==="REVIEW").map(b=><ProspectCard key={b.id} business={b}/>)}</div>{!data.businesses.some(x=>x.status==="REVIEW")&&<Card className="text-center text-muted-foreground">Aucun prospect en attente de validation.</Card>}</>}
+      <div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold">Prospects potentiels détectés</h2><span className="rounded-full bg-muted px-3 py-1 text-sm font-medium">{data.businesses.length} affiché{data.businesses.length>1?"s":""}</span></div>
+      <div className="grid gap-4 xl:grid-cols-2">{data.businesses.map(b=><ProspectCard key={b.id} business={b}/>)}</div>{data.businesses.length===0&&<Card className="text-center text-muted-foreground">Aucun prospect en attente de validation ne correspond à ces filtres.</Card>}</>}
   </div>;
 }
 
