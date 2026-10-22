@@ -14,6 +14,9 @@ const eslintConfig = [
       "node_modules/**",
       "coverage/**",
       "dist/**",
+      "prospection/**",
+      ".email-test-data/**",
+      ".email-preview-data/**",
       "next-env.d.ts"
     ]
   },

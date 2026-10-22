@@ -736,3 +736,113 @@ model AuditLog {
   createdAt  DateTime @default(now())
   actor      User?    @relation(fields: [actorId], references: [id])
 }
+
+enum EmailStatus {
+  draft
+  approved
+  scheduled
+  sending
+  sent
+  failed
+  cancelled
+  suppressed
+}
+
+enum EmailAttemptOutcome {
+  pending
+  accepted
+  simulated
+  temporary_failure
+  permanent_failure
+  uncertain
+}
+
+model EmailQueue {
+  id               String      @id @default(cuid())
+  idempotencyKey   String      @unique
+  payloadHash      String
+  recipientKey     String      @unique
+  companyName      String
+  recipient        String
+  subject          String
+  body             String      @db.Text
+  companyUrl       String?
+  mockupUrl        String?
+  personalization  String?     @db.Text
+  prospectId       String?
+  status           EmailStatus @default(draft)
+  version          Int         @default(1)
+  approvedAt       DateTime?
+  approvedBy       String?
+  approvalMode     String?
+  notBefore        DateTime?
+  scheduledAt      DateTime?
+  sentAt           DateTime?
+  simulated        Boolean     @default(false)
+  retryAt          DateTime?
+  retryCount       Int         @default(0)
+  reviewRequired   Boolean     @default(false)
+  deletedAt        DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  attempts         EmailSendAttempt[]
+
+  @@index([status, scheduledAt])
+  @@index([createdAt])
+  @@map("email_queue")
+}
+
+model EmailSettings {
+  id               String   @id @default("singleton")
+  enabled          Boolean  @default(false)
+  intervalMinutes  Int      @default(300)
+  dailyLimit       Int      @default(2)
+  startMinute      Int      @default(540)
+  endMinute        Int      @default(1080)
+  weekdays         Int[]    @default([1, 2, 3, 4, 5])
+  timezone         String   @default("Europe/Paris")
+  resumeAfter      DateTime @default(now())
+  revision         Int      @default(1)
+  workerHeartbeat  DateTime?
+  retentionDays    Int      @default(90)
+  updatedAt        DateTime @updatedAt
+
+  @@map("email_settings")
+}
+
+model EmailSendAttempt {
+  id                 String              @id @default(cuid())
+  emailId            String
+  email              EmailQueue          @relation(fields: [emailId], references: [id], onDelete: Restrict)
+  mode               String
+  outcome            EmailAttemptOutcome @default(pending)
+  startedAt          DateTime            @default(now())
+  finishedAt         DateTime?
+  providerMessageId  String?
+  providerCode       String?
+  detail             String?
+  workerId           String
+  settingsRevision   Int
+
+  @@index([startedAt])
+  @@index([outcome, startedAt])
+  @@map("email_send_attempts")
+}
+
+model EmailSuppression {
+  recipientKey String   @id
+  reason       String
+  maskedEmail  String
+  createdAt    DateTime @default(now())
+  actorId      String?
+
+  @@map("email_suppressions")
+}
+
+model EmailApiRateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+
+  @@map("email_api_rate_limits")
+}

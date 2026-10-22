@@ -1,0 +1,24 @@
+[Unit]
+Description=VisiPro scheduled email worker
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=__USER__
+Group=__GROUP__
+WorkingDirectory=__PROJECT_DIR__
+Environment=NODE_ENV=production
+ExecStart="__NODE_BIN__" "__PROJECT_DIR__/node_modules/tsx/dist/cli.mjs" "__PROJECT_DIR__/scripts/email-worker.ts"
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=120
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

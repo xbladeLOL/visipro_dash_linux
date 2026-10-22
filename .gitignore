@@ -11,3 +11,7 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+
+.email-test-data/
+.email-preview-data/
+.email-test-results/

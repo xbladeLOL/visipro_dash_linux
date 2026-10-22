@@ -37,3 +37,9 @@ npm run db:seed
 ## Sécurité
 
 Le fichier `.env` réel n'est pas versionné. Utilise `.env.example` comme modèle.
+
+## E-mails de prospection
+
+Module de développement : **Prospection → E-mails**, API d'import de brouillons, programmation persistante et worker indépendant. Mode initial : simulation, en pause. Documentation : [docs/EMAIL_PROSPECTION.md](docs/EMAIL_PROSPECTION.md).
+
+Tests complets isolés : `npm run test:email`. Parcours navigateur : `npm run test:email:browser`. Aucun fournisseur réel n'est contacté par ces tests.
