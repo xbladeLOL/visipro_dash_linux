@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { renderEmailBody } from "@/lib/email/content";
 import { prisma } from "@/lib/prisma";
 import { requireEmailUser } from "@/lib/email/access";
 import { emailTransaction, getSettings } from "@/lib/email/store";
@@ -28,6 +29,7 @@ export default async function EmailPage({
   });
   if (!message || message.deletedAt) notFound();
   const settings = await emailTransaction(getSettings);
+  const preview = renderEmailBody(message);
   const canEdit =
     !["sent", "sending", "suppressed"].includes(message.status) &&
     !message.reviewRequired;
@@ -85,6 +87,26 @@ export default async function EmailPage({
           </div>
         </Card>
       )}
+      <Card className="space-y-3">
+        <h2 className="font-semibold">Aperçu du message enregistré</h2>
+        <p className="text-sm text-muted-foreground">
+          Pour un lien nommé, écrivez [Découvrir la
+          maquette](https://adresse-de-la-maquette). Le champ Maquette VisiPro
+          ajoute automatiquement ce lien s’il n’est pas déjà dans le texte.
+          Enregistrez vos modifications pour actualiser cet aperçu.
+        </p>
+        <div
+          data-testid="email-content-preview"
+          className="break-words rounded-lg border bg-card p-5"
+          dangerouslySetInnerHTML={{ __html: preview.html }}
+        />
+        {message.status === "sent" && (
+          <p className="text-sm text-muted-foreground">
+            Rendu avec le format actuel ; les messages déjà envoyés ne sont pas
+            modifiés et cet aperçu n’est pas une copie archivée de l’envoi.
+          </p>
+        )}
+      </Card>
       <Card>
         <form action={saveEmail} className="grid gap-4 sm:grid-cols-2">
           {hidden}

@@ -5,6 +5,7 @@ export const config = {
   runtime: "nodejs",
   // Import authenticates by bearer key; opposition authenticates by signed token.
   matcher: [
-    "/((?!api/auth|api/email-drafts$|email-unsubscribe/|_next/static|_next/image|favicon.ico|login).*)",
+    "/((?!api/auth|api/email-drafts$|api/worker-crm$|email-unsubscribe/|_next/static|_next/image|favicon.ico|login).*)",
   ],
 };
+

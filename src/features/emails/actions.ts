@@ -130,8 +130,8 @@ export async function saveEmailSettings(data: FormData) {
             Number(data.get("interval")) *
             (data.get("unit") === "hours" ? 60 : 1),
           dailyLimit: Number(data.get("dailyLimit")),
-          startMinute: minute("startTime"),
-          endMinute: minute("endTime"),
+          startMinute: data.get("allDay") === "on" ? 0 : minute("startTime"),
+          endMinute: data.get("allDay") === "on" ? 1440 : minute("endTime"),
           weekdays: data.getAll("weekdays").map(Number),
           timezone: String(data.get("timezone")),
           retentionDays: Number(data.get("retentionDays")),
