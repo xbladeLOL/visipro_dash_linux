@@ -1,7 +1,8 @@
 [Unit]
 Description=VisiPro Dashboard
-Wants=network-online.target
-After=network-online.target tailscaled.service postgresql.service
+Wants=network-online.target postgresql.service
+After=network-online.target postgresql.service
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -10,11 +11,17 @@ Group=__GROUP__
 WorkingDirectory=__PROJECT_DIR__
 Environment=NODE_ENV=production
 Environment=PORT=3003
-ExecStart=__NODE_BIN__ __PROJECT_DIR__/node_modules/next/dist/bin/next start
+ExecStart="__NODE_BIN__" "__PROJECT_DIR__/node_modules/next/dist/bin/next" start -p 3003
 Restart=always
 RestartSec=5
-TimeoutStopSec=20
+TimeoutStopSec=45
 KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__PROJECT_DIR__/.next
 
 [Install]
 WantedBy=multi-user.target
