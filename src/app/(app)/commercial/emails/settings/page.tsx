@@ -10,9 +10,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmailSendingWindow } from "@/components/email-sending-window";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
-const time = (minute: number) =>
-  `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -90,24 +89,7 @@ export default async function SettingsPage({
             Fuseau horaire
             <Input name="timezone" required defaultValue={settings.timezone} />
           </label>
-          <label>
-            Début des envois
-            <Input
-              name="startTime"
-              type="time"
-              required
-              defaultValue={time(settings.startMinute)}
-            />
-          </label>
-          <label>
-            Fin des envois (exclue)
-            <Input
-              name="endTime"
-              type="time"
-              required
-              defaultValue={time(settings.endMinute)}
-            />
-          </label>
+          <EmailSendingWindow startMinute={settings.startMinute} endMinute={settings.endMinute} />
           <fieldset className="sm:col-span-2">
             <legend className="mb-2">Jours autorisés</legend>
             <div className="flex flex-wrap gap-4">

@@ -1,0 +1,16 @@
+[Unit]
+Description=VisiPro Tailscale public tunnel
+Wants=network-online.target tailscaled.service visipro-dashboard.service
+After=network-online.target tailscaled.service visipro-dashboard.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=__TAILSCALE_BIN__ funnel --bg 3003
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=15
+TimeoutStartSec=90
+
+[Install]
+WantedBy=multi-user.target

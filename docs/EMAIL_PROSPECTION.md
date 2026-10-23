@@ -10,7 +10,7 @@ L'installation démarre avec la programmation en pause et `EMAIL_DELIVERY_MODE=s
 
 ## Utilisation
 
-Le menu **Prospection → E-mails** est accessible aux comptes OWNER et ADMIN. Les droits sont relus en base à chaque action. Les MEMBER ne peuvent ni consulter ni modifier ce module.
+Le menu **Commercial → E-mails** est accessible aux comptes OWNER et ADMIN. Les droits sont relus en base à chaque action. Les MEMBER ne peuvent ni consulter ni modifier ce module.
 
 - Importer par API ou créer manuellement un brouillon.
 - Consulter et modifier le contenu intégral. Toute modification remet le message en brouillon.
@@ -38,7 +38,7 @@ Le fournisseur réel et l'adresse expéditrice restent à confirmer avec le prop
 
 Le mode SMTP exige simultanément `EMAIL_DELIVERY_MODE=smtp`, `EMAIL_REAL_SEND_ENABLED=true`, une configuration complète et une programmation active. Son activation réelle nécessite l'autorisation du propriétaire. Tous les processus doivent utiliser les mêmes valeurs. Le changement de mode remet les messages approuvés pour un autre mode en brouillon lors du prochain recalcul, avant toute transmission.
 
-Le transport utilise TLS obligatoire et des délais de connexion et d'inactivité. Aucun HTML, pièce jointe, chargement de fichier ou chargement d'URL n'est accepté par l'API de brouillons. Les URLs de site et de maquette sont des métadonnées : si le lien doit figurer dans le message, l'IA doit l'inclure dans le texte.
+Le transport utilise TLS obligatoire et des délais de connexion et d'inactivité. Aucun HTML, pièce jointe, chargement de fichier ou chargement d'URL n'est accepté par l'API de brouillons. Le champ mockupUrl ajoute un lien nommé dans le message ; companyUrl reste une métadonnée interne. Voir la section sur les liens nommés.
 
 L'alias npm `visipro-smtp` désigne Nodemailer 10.2 ou ultérieur. Il isole la version corrigée utilisée par le worker des contraintes du fournisseur e-mail optionnel d'Auth.js, qui n'est pas utilisé (la connexion reste Credentials).
 
@@ -134,3 +134,23 @@ La configuration Vitest se limite aux tests du dashboard dans `tests/`. Les proj
 Le banc de test vérifie aussi un arrêt/redémarrage effectif de PostgreSQL et la préservation d'un client fictif préexistant lors de la migration additive.
 
 Correction d'authentification : le middleware historique à la racine n'était pas chargé avec cette structure `src/app`. Il réside maintenant dans `src/middleware.ts`, avec une configuration de session partagée indépendante de Prisma. Le test navigateur vérifie réellement la redirection anonyme et les exceptions d'import/opposition.
+
+## Liens nommés et maquettes dans les e-mails
+
+Le champ API `mockupUrl` accepte l'URL HTTP(S) publique de la maquette. Il ajoute automatiquement un lien **Découvrir la maquette** si le corps ne contient pas déjà cette URL. Aucun lien n'est inventé lorsqu'il manque : l'agent doit d'abord disposer d'une maquette réellement publiée.
+
+Pour choisir le libellé et l'emplacement, utiliser dans `body` : `[Découvrir la maquette](https://adresse-publique-de-la-maquette)`. Le serveur génère une version HTML avec ce lien et une alternative en texte brut contenant l'URL. Le HTML brut fourni par l'agent reste échappé : seuls les paragraphes, retours à la ligne et liens nommés HTTP(S) sont interprétés. Aucune image distante ni pixel de suivi n'est ajouté.
+
+L'aperçu du message enregistré est disponible sur la fiche d'un e-mail. Après une modification, enregistrer le brouillon pour actualiser cet aperçu ; une nouvelle validation reste nécessaire. Pour un message ancien déjà envoyé, le rendu actuel ne constitue pas une copie archivée du format réellement transmis.
+
+Les champs `companyUrl`, `personalization` et `prospectId` restent des informations de contexte internes ; ils ne sont pas ajoutés automatiquement au corps du message. `mockupUrl` est facultatif mais doit être renseigné lorsqu'une maquette est annoncée et publiée. Omettre les champs facultatifs inconnus au lieu d'envoyer une valeur vide ou `null`.
+
+## Toute la journée
+
+Dans Commercial > E-mails > Paramètres, « Envoyer toute la journée (24 h/24) » enregistre une fenêtre de 0 à 1440 minutes. Les jours autorisés, le quota, l’intervalle minimal et le délai de reprise restent appliqués. Chaque sauvegarde reporte le premier envoi d’un intervalle complet. Un changement du mode simulation vers SMTP remet les messages en brouillon et exige une nouvelle validation.
+
+## Démarrage automatique sur Ubuntu
+
+Les modèles `visipro-dashboard.service.template`, `visipro-email-worker.service.template` et `visipro-funnel.service.template` servent à installer les trois services dans `/etc/systemd/system/`. Remplacer les paramètres `__USER__`, `__GROUP__`, `__PROJECT_DIR__`, `__NODE_BIN__` et `__TAILSCALE_BIN__` par les valeurs locales, avec des chemins absolus. Le dashboard attend un build existant, écoute sur 3003 et peut écrire dans `.next`. Le worker charge le fichier `.env` depuis le dossier du projet ; aucun secret ne doit être ajouté aux unités Git.
+
+Après installation : `sudo systemctl daemon-reload`, puis `sudo systemctl enable --now visipro-dashboard visipro-email-worker visipro-funnel`. PostgreSQL, Tailscale et Docker doivent aussi être activés. Les conteneurs du moteur de prospection utilisent leur configuration Compose et une politique de redémarrage persistante. Le tunnel Funnel reste en arrière-plan ; aucun terminal ouvert n’est nécessaire. Vérifier `systemctl status visipro-dashboard visipro-email-worker visipro-funnel` après un redémarrage.

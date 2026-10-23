@@ -19,7 +19,8 @@
     "email:worker": "tsx scripts/email-worker.ts",
     "test:email": "tsx scripts/test-emails.ts",
     "test:unit": "vitest run --exclude tests/email/integration.test.ts",
-    "test:email:browser": "tsx scripts/test-emails.ts --browser"
+    "test:email:browser": "tsx scripts/test-emails.ts --browser",
+    "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

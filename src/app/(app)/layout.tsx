@@ -10,7 +10,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <div className="min-w-0 flex-1">
         <Topbar />
-        <main className="p-4 lg:p-8">{children}</main>
+        <main id="main-content" className="min-w-0 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:p-8">{children}</main>
       </div>
     </div>
   );

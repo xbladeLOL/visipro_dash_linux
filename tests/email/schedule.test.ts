@@ -17,6 +17,22 @@ const config = {
   resumeAfter: new Date("2026-01-01Z"),
 };
 describe("email schedule and safe provider", () => {
+  it("allows midnight and the last minute with all-day settings, preserving weekdays", () => {
+    const allDay = { ...config, startMinute: 0, endMinute: 1440 };
+    expect(inWindow(new Date("2026-10-21T22:00Z"), allDay)).toBe(true);
+    expect(inWindow(new Date("2026-10-22T21:59Z"), allDay)).toBe(true);
+    expect(inWindow(new Date("2026-10-23T22:00Z"), allDay)).toBe(false);
+    expect(nextSlot(allDay, new Date("2026-10-22T21:59Z"), null, []))
+      .toEqual(new Date("2026-10-22T21:59Z"));
+  });
+  it("keeps the elapsed interval and local daily quota across midnight in all-day mode", () => {
+    const allDay = { ...config, startMinute: 0, endMinute: 1440 };
+    const used = [new Date("2026-10-22T12:00Z"), new Date("2026-10-22T17:00Z")];
+    expect(nextSlot(allDay, new Date("2026-10-22T18:00Z"), used[1], used))
+      .toEqual(new Date("2026-10-22T22:00Z"));
+    expect(nextSlot(allDay, new Date("2026-10-22T21:00Z"), new Date("2026-10-22T20:00Z"), []))
+      .toEqual(new Date("2026-10-23T01:00Z"));
+  });
   it("enforces five elapsed hours", () => {
     expect(
       nextSlot(
