@@ -32,16 +32,3 @@ export function normalizeUnsubscribeFeedback(reasonCode: unknown, comment: unkno
     comment: normalizedComment || null,
   };
 }
-
-export function normalizeOptionalUnsubscribeFeedback(
-  reasonCode: unknown,
-  comment: unknown,
-) {
-  const normalizedReason = String(reasonCode ?? "");
-  const normalizedComment = String(comment ?? "").trim();
-  if (!normalizedReason && !normalizedComment) return null;
-  return normalizeUnsubscribeFeedback(
-    normalizedReason || "OTHER",
-    normalizedComment,
-  );
-}

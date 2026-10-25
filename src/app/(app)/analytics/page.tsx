@@ -23,6 +23,15 @@ function SectionHeading({ id, title, description }: { id: string; title: string;
   return <div id={id} className="scroll-mt-24"><h2 className="text-2xl font-semibold tracking-tight">{title}</h2><p className="text-sm text-muted-foreground">{description}</p></div>;
 }
 
+function MonthlyCounts({ rows }: { rows: { month: string; count: number }[] }) {
+  const max = Math.max(...rows.map((row) => row.count), 1);
+  return <div className="grid h-48 grid-cols-12 items-end gap-1 sm:gap-2">{rows.map((row) => <div key={row.month} className="flex min-w-0 flex-col items-center gap-2">
+    <span className="text-xs font-medium">{row.count}</span>
+    <div className="flex h-28 w-full items-end rounded-md bg-muted"><div className="w-full rounded-md bg-primary" style={{ height: `${row.count ? Math.max((row.count / max) * 100, 6) : 0}%` }} /></div>
+    <span className="w-full truncate text-center text-[10px] text-muted-foreground" title={row.month}>{row.month.split(" ")[0]}</span>
+  </div>)}</div>;
+}
+
 export default async function AnalyticsPage() {
   const data = await getAnalytics();
   const maxExpense = data.finance.expensesByCategory[0]?.amount ?? 0;
@@ -83,11 +92,14 @@ export default async function AnalyticsPage() {
         <StatCard label="Prospects perdus" value={String(data.sales.lostProspects)} helper={`${data.sales.lostProspects30Days} perdus sur 30 jours`} />
         <StatCard label="Taux de victoire" value={formatPercent(data.sales.winRate)} helper="Gagnés parmi les dossiers décidés" />
         <StatCard label="Nouveaux prospects" value={String(data.sales.newProspects30Days)} helper="Créés sur les 30 derniers jours" />
+        <StatCard label="Relances en retard" value={String(data.sales.overdueFollowUps)} helper={`${data.sales.scheduledFollowUps} relance${data.sales.scheduledFollowUps > 1 ? "s" : ""} planifiée${data.sales.scheduledFollowUps > 1 ? "s" : ""}`} />
+        <StatCard label="Âge moyen du pipeline" value={`${Math.round(data.sales.averageProspectAgeDays)} j`} helper="Prospects encore ouverts" />
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card><h3 className="mb-5 text-lg font-semibold">Étapes du pipeline</h3><Distribution rows={data.sales.prospectStages} /></Card>
         <Card><h3 className="mb-5 text-lg font-semibold">Origine des prospects</h3><Distribution rows={data.sales.topSources} /></Card>
       </div>
+      <Card><h3 className="mb-1 text-lg font-semibold">Complétude des fiches prospects</h3><p className="mb-5 text-sm text-muted-foreground">Présence réelle des coordonnées et informations détectées.</p><Distribution rows={data.sales.dataCompleteness} /></Card>
     </section>
 
     <section className="space-y-5">
@@ -97,10 +109,16 @@ export default async function AnalyticsPage() {
         <StatCard label="Succès d’envoi" value={formatPercent(data.emails.sendSuccessRate)} helper={`${data.emails.failed} échec${data.emails.failed > 1 ? "s" : ""}`} />
         <StatCard label="Désinscriptions" value={String(data.emails.suppressions)} helper="Oppositions enregistrées" />
         <StatCard label="Réponses au questionnaire" value={String(data.emails.feedbackTotal)} helper={formatPercent(data.emails.feedbackRate) + " des désinscriptions"} />
+        <StatCard label="Tentatives d’envoi" value={String(data.emails.attempts)} helper={`${data.emails.retried} e-mail${data.emails.retried > 1 ? "s" : ""} relancé${data.emails.retried > 1 ? "s" : ""}`} />
+        <StatCard label="À vérifier" value={String(data.emails.reviewRequired)} helper="E-mails nécessitant une revue" />
+        <StatCard label="Commentaires reçus" value={String(data.emails.feedbackWithComment)} helper="Commentaires facultatifs renseignés" />
+        <StatCard label="Délai avant opposition" value={data.emails.averageUnsubscribeDelayDays === null ? "—" : `${data.emails.averageUnsubscribeDelayDays.toFixed(1)} j`} helper="Moyenne mesurée après l’envoi" />
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card><h3 className="mb-5 text-lg font-semibold">État de la file d’e-mails</h3><Distribution rows={data.emails.statuses} /></Card>
-        <Card><h3 className="mb-1 text-lg font-semibold">Motifs de désinscription</h3><p className="mb-5 text-sm text-muted-foreground">Réponses facultatives au questionnaire.</p><Distribution rows={data.emails.feedbackReasons} empty="Aucune réponse au questionnaire pour le moment." /></Card>
+        <Card><h3 className="mb-1 text-lg font-semibold">Résultat des tentatives</h3><p className="mb-5 text-sm text-muted-foreground">Réponses techniques réellement retournées par le fournisseur.</p><Distribution rows={data.emails.attemptOutcomes} /></Card>
+        <Card><h3 className="mb-1 text-lg font-semibold">Motifs de désinscription</h3><p className="mb-5 text-sm text-muted-foreground">Motif obligatoire pour les nouvelles désinscriptions.</p><Distribution rows={data.emails.feedbackReasons} empty="Aucune réponse au questionnaire pour le moment." /></Card>
+        <Card><h3 className="mb-1 text-lg font-semibold">Désinscriptions sur 12 mois</h3><p className="mb-5 text-sm text-muted-foreground">Oppositions effectivement enregistrées par mois.</p><MonthlyCounts rows={data.emails.unsubscribeMonths} /></Card>
       </div>
     </section>
 
@@ -112,9 +130,10 @@ export default async function AnalyticsPage() {
         <StatCard label="Abonnements actifs" value={String(data.production.activeSubscriptions)} helper={`${data.production.monthlySubscriptions} facturés mensuellement`} />
         <StatCard label="Retards" value={String(data.production.overdueProjects + data.production.overdueTasks)} helper={`${data.production.overdueProjects} projets · ${data.production.overdueTasks} tâches`} />
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-3">
         <Card><h3 className="mb-5 text-lg font-semibold">État des projets</h3><Distribution rows={data.production.projectStatuses} /></Card>
         <Card><h3 className="mb-5 text-lg font-semibold">État des tâches</h3><Distribution rows={data.production.taskStatuses} /></Card>
+        <Card><h3 className="mb-5 text-lg font-semibold">Priorité des tâches</h3><Distribution rows={data.production.taskPriorities} /></Card>
       </div>
       <Card><h3 className="text-lg font-semibold">Performance par service</h3><p className="mb-5 text-sm text-muted-foreground">Valeur des projets rattachés à chaque service.</p>{data.production.services.length ? <div className="space-y-4">{data.production.services.map((service) => <div key={service.name}><div className="mb-1 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between"><span className="font-medium">{service.name}</span><span>{service.projects} projet{service.projects > 1 ? "s" : ""} · {service.delivered} livré{service.delivered > 1 ? "s" : ""} · <strong>{formatCurrency(service.value)}</strong></span></div><div className="h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${maxService ? Math.max((service.value / maxService) * 100, 1) : 0}%` }} /></div></div>)}</div> : <p className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">Aucun projet rattaché à un service.</p>}</Card>
     </section>

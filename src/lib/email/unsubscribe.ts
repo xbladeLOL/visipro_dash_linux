@@ -1,7 +1,6 @@
 import { emailTransaction, suppressKey } from "./store";
 import { constantEqual, EmailError, maskEmail, tokenFor } from "./validation";
 import {
-  normalizeOptionalUnsubscribeFeedback,
   normalizeUnsubscribeFeedback,
 } from "./unsubscribe-feedback";
 export async function findUnsubscribe(tx: import("./store").Tx, token: string) {
@@ -35,7 +34,7 @@ export async function unsubscribeWithFeedback(
   reasonCode: unknown,
   comment: unknown,
 ) {
-  const feedback = normalizeOptionalUnsubscribeFeedback(reasonCode, comment);
+  const feedback = normalizeUnsubscribeFeedback(reasonCode, comment);
   await emailTransaction(async (tx) => {
     const message = await findUnsubscribe(tx, token);
     await suppressKey(
@@ -45,12 +44,10 @@ export async function unsubscribeWithFeedback(
       "opposition",
       null,
     );
-    if (feedback) {
-      await tx.emailUnsubscribeFeedback.createMany({
-        data: [{ recipientKey: message.recipientKey, ...feedback }],
-        skipDuplicates: true,
-      });
-    }
+    await tx.emailUnsubscribeFeedback.createMany({
+      data: [{ recipientKey: message.recipientKey, ...feedback }],
+      skipDuplicates: true,
+    });
   });
 }
 

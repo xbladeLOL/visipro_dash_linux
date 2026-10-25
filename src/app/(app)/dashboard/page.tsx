@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       </Card>
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div><h2 className="text-lg font-semibold">Motifs de désinscription</h2><p className="text-sm text-muted-foreground">Réponses facultatives recueillies après une opposition aux sollicitations.</p></div>
+          <div><h2 className="text-lg font-semibold">Motifs de désinscription</h2><p className="text-sm text-muted-foreground">Motifs recueillis lors des oppositions aux sollicitations.</p></div>
           <div className="text-left sm:text-right"><div className="text-2xl font-semibold">{unsubscribeStats.totalResponses}</div><div className="text-xs text-muted-foreground">réponse{unsubscribeStats.totalResponses > 1 ? "s" : ""} · {formatPercent(unsubscribeStats.responseRate)} des oppositions</div></div>
         </div>
         {unsubscribeStats.reasons.length ? <div className="mt-6 space-y-4">{unsubscribeStats.reasons.map((reason) => <div key={reason.reasonCode}><div className="mb-1 flex items-center justify-between gap-4 text-sm"><span>{reason.label}</span><strong>{formatPercent(reason.percentage)} <span className="font-normal text-muted-foreground">({reason.count})</span></strong></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${reason.percentage * 100}%` }} /></div></div>)}</div> : <p className="mt-6 rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">Aucune réponse au questionnaire pour le moment. Les statistiques apparaîtront ici dès la première réponse.</p>}

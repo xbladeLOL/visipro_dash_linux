@@ -1,6 +1,8 @@
 import {
+  EmailAttemptOutcome,
   EmailStatus,
   InvoiceStatus,
+  Priority,
   ProjectStatus,
   ProspectStage,
   QuoteStatus,
@@ -12,7 +14,7 @@ import {
 import { startOfMonth, startOfYear, subDays, subMonths } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { calculateMrr } from "@/lib/financial";
-import { prospectStageLabels, projectStatusLabels, taskStatusLabels } from "@/lib/labels";
+import { priorityLabels, prospectStageLabels, projectStatusLabels, taskStatusLabels } from "@/lib/labels";
 import { unsubscribeFeedbackReasonLabel } from "@/lib/email/unsubscribe-feedback";
 
 type CountRow<T extends string> = { key: T; label: string; count: number; percentage: number };
@@ -48,10 +50,10 @@ export async function getAnalytics() {
     projects,
     tasks,
     subscriptions,
-    emailStatusGroups,
-    emailsLast30Days,
-    suppressions,
-    feedbackGroups,
+    emailRows,
+    suppressionRows,
+    feedbackRows,
+    attemptGroups,
     services,
   ] = await Promise.all([
     prisma.transaction.findMany({
@@ -71,7 +73,18 @@ export async function getAnalytics() {
     }),
     prisma.quote.findMany({ select: { status: true, total: true, issuedAt: true } }),
     prisma.prospect.findMany({
-      select: { stage: true, source: true, potentialValue: true, createdAt: true, lostAt: true },
+      select: {
+        stage: true,
+        source: true,
+        potentialValue: true,
+        email: true,
+        phone: true,
+        website: true,
+        city: true,
+        nextFollowUpAt: true,
+        createdAt: true,
+        lostAt: true,
+      },
     }),
     prisma.client.count(),
     prisma.project.findMany({
@@ -85,14 +98,20 @@ export async function getAnalytics() {
     }),
     prisma.task.findMany({ select: { status: true, priority: true, dueDate: true } }),
     prisma.subscription.findMany({ select: { amount: true, interval: true, status: true } }),
-    prisma.emailQueue.groupBy({
-      by: ["status"],
+    prisma.emailQueue.findMany({
       where: { deletedAt: null },
-      _count: { _all: true },
+      select: {
+        status: true,
+        createdAt: true,
+        sentAt: true,
+        retryCount: true,
+        reviewRequired: true,
+        recipientKey: true,
+      },
     }),
-    prisma.emailQueue.count({ where: { deletedAt: null, createdAt: { gte: thirtyDaysAgo } } }),
-    prisma.emailSuppression.count(),
-    prisma.emailUnsubscribeFeedback.groupBy({ by: ["reasonCode"], _count: { _all: true } }),
+    prisma.emailSuppression.findMany({ select: { recipientKey: true, createdAt: true } }),
+    prisma.emailUnsubscribeFeedback.findMany({ select: { reasonCode: true, comment: true } }),
+    prisma.emailSendAttempt.groupBy({ by: ["outcome"], _count: { _all: true } }),
     prisma.service.findMany({ select: { id: true, name: true } }),
   ]);
 
@@ -149,18 +168,40 @@ export async function getAnalytics() {
   const openTasks = tasks.filter((task) => !closedTaskStatuses.has(task.status));
   const overdueTasks = openTasks.filter((task) => task.dueDate && task.dueDate < now);
   const overdueProjects = activeProjects.filter((project) => project.deadline && project.deadline < now);
+  const openProspects = prospects.filter((prospect) => !closedProspectStages.has(prospect.stage));
+  const overdueFollowUps = openProspects.filter((prospect) => prospect.nextFollowUpAt && prospect.nextFollowUpAt < now);
+  const averageProspectAgeDays = openProspects.length === 0 ? 0 : openProspects.reduce(
+    (sum, prospect) => sum + Math.max(0, now.getTime() - prospect.createdAt.getTime()),
+    0,
+  ) / openProspects.length / 86_400_000;
   const mrr = calculateMrr(subscriptions.map((subscription) => ({
     amount: Number(subscription.amount),
     interval: subscription.interval,
     status: subscription.status,
   })));
 
-  const emailCounts = new Map(emailStatusGroups.map((row) => [row.status, row._count._all]));
-  const totalEmails = [...emailCounts.values()].reduce((sum, count) => sum + count, 0);
+  const emailCounts = new Map<EmailStatus, number>();
+  for (const email of emailRows) emailCounts.set(email.status, (emailCounts.get(email.status) ?? 0) + 1);
+  const totalEmails = emailRows.length;
   const deliveredEmails = emailCounts.get(EmailStatus.sent) ?? 0;
   const failedEmails = emailCounts.get(EmailStatus.failed) ?? 0;
   const terminalEmails = deliveredEmails + failedEmails + (emailCounts.get(EmailStatus.suppressed) ?? 0);
-  const feedbackTotal = feedbackGroups.reduce((sum, row) => sum + row._count._all, 0);
+  const feedbackTotal = feedbackRows.length;
+  const feedbackCounts = new Map<string, number>();
+  for (const feedback of feedbackRows) feedbackCounts.set(feedback.reasonCode, (feedbackCounts.get(feedback.reasonCode) ?? 0) + 1);
+  const emailByRecipient = new Map(emailRows.map((email) => [email.recipientKey, email]));
+  const unsubscribeDelays = suppressionRows.flatMap((suppression) => {
+    const sentAt = emailByRecipient.get(suppression.recipientKey)?.sentAt;
+    if (!sentAt || suppression.createdAt < sentAt) return [];
+    return [(suppression.createdAt.getTime() - sentAt.getTime()) / 86_400_000];
+  });
+  const unsubscribeMonths = financialMonths.map((month) => ({ month: month.month, count: 0 }));
+  const unsubscribeMonthMap = new Map(financialMonths.map((month, index) => [month.key, unsubscribeMonths[index]]));
+  for (const suppression of suppressionRows) {
+    const bucket = unsubscribeMonthMap.get(monthKey(suppression.createdAt));
+    if (bucket) bucket.count += 1;
+  }
+  const attemptTotal = attemptGroups.reduce((sum, row) => sum + row._count._all, 0);
 
   const sourceCounts = new Map<string, number>();
   for (const prospect of prospects) {
@@ -192,6 +233,14 @@ export async function getAnalytics() {
   };
   const emailStatusLabels: Record<EmailStatus, string> = {
     draft: "Brouillon", approved: "Approuvé", scheduled: "Planifié", sending: "En cours", sent: "Envoyé", failed: "Échec", cancelled: "Annulé", suppressed: "Bloqué",
+  };
+  const attemptOutcomeLabels: Record<EmailAttemptOutcome, string> = {
+    pending: "En attente",
+    accepted: "Acceptée par le fournisseur",
+    simulated: "Simulation",
+    temporary_failure: "Échec temporaire",
+    permanent_failure: "Échec permanent",
+    uncertain: "Résultat incertain",
   };
 
   const revenueYear = financialMonths
@@ -251,6 +300,15 @@ export async function getAnalytics() {
       winRate: decidedProspects === 0 ? 0 : wonProspects.length / decidedProspects,
       newProspects30Days: prospects.filter((prospect) => prospect.createdAt >= thirtyDaysAgo).length,
       lostProspects30Days: prospects.filter((prospect) => prospect.lostAt && prospect.lostAt >= thirtyDaysAgo).length,
+      overdueFollowUps: overdueFollowUps.length,
+      scheduledFollowUps: openProspects.filter((prospect) => prospect.nextFollowUpAt).length,
+      averageProspectAgeDays,
+      dataCompleteness: [
+        { label: "Avec e-mail", count: prospects.filter((prospect) => prospect.email).length },
+        { label: "Avec téléphone", count: prospects.filter((prospect) => prospect.phone).length },
+        { label: "Avec site web", count: prospects.filter((prospect) => prospect.website).length },
+        { label: "Avec ville", count: prospects.filter((prospect) => prospect.city).length },
+      ].map((row) => ({ ...row, percentage: prospects.length === 0 ? 0 : row.count / prospects.length })),
       prospectStages: countBy(prospects.map((prospect) => prospect.stage), Object.values(ProspectStage), prospectStageLabels),
       topSources: [...sourceCounts.entries()]
         .map(([label, count]) => ({ label, count, percentage: prospects.length === 0 ? 0 : count / prospects.length }))
@@ -261,7 +319,6 @@ export async function getAnalytics() {
       total: totalEmails,
       sent: deliveredEmails,
       failed: failedEmails,
-      createdLast30Days: emailsLast30Days,
       sendSuccessRate: terminalEmails === 0 ? 0 : deliveredEmails / terminalEmails,
       statuses: Object.values(EmailStatus).map((key) => ({
         key,
@@ -269,14 +326,25 @@ export async function getAnalytics() {
         count: emailCounts.get(key) ?? 0,
         percentage: totalEmails === 0 ? 0 : (emailCounts.get(key) ?? 0) / totalEmails,
       })),
-      suppressions,
+      createdLast30Days: emailRows.filter((email) => email.createdAt >= thirtyDaysAgo).length,
+      retried: emailRows.filter((email) => email.retryCount > 0).length,
+      reviewRequired: emailRows.filter((email) => email.reviewRequired).length,
+      attempts: attemptTotal,
+      attemptOutcomes: Object.values(EmailAttemptOutcome).map((key) => {
+        const count = attemptGroups.find((row) => row.outcome === key)?._count._all ?? 0;
+        return { key, label: attemptOutcomeLabels[key], count, percentage: attemptTotal === 0 ? 0 : count / attemptTotal };
+      }),
+      suppressions: suppressionRows.length,
       feedbackTotal,
-      feedbackRate: suppressions === 0 ? 0 : feedbackTotal / suppressions,
-      feedbackReasons: feedbackGroups
-        .map((row) => ({
-          label: unsubscribeFeedbackReasonLabel(row.reasonCode),
-          count: row._count._all,
-          percentage: feedbackTotal === 0 ? 0 : row._count._all / feedbackTotal,
+      feedbackWithComment: feedbackRows.filter((feedback) => feedback.comment).length,
+      feedbackRate: suppressionRows.length === 0 ? 0 : feedbackTotal / suppressionRows.length,
+      averageUnsubscribeDelayDays: unsubscribeDelays.length === 0 ? null : unsubscribeDelays.reduce((sum, days) => sum + days, 0) / unsubscribeDelays.length,
+      unsubscribeMonths,
+      feedbackReasons: [...feedbackCounts.entries()]
+        .map(([reasonCode, count]) => ({
+          label: unsubscribeFeedbackReasonLabel(reasonCode),
+          count,
+          percentage: feedbackTotal === 0 ? 0 : count / feedbackTotal,
         }))
         .sort((a, b) => b.count - a.count),
     },
@@ -287,6 +355,7 @@ export async function getAnalytics() {
       overdueTasks: overdueTasks.length,
       projectStatuses: countBy(projects.map((project) => project.status), Object.values(ProjectStatus), projectStatusLabels),
       taskStatuses: countBy(tasks.map((task) => task.status), Object.values(TaskStatus), taskStatusLabels),
+      taskPriorities: countBy(tasks.map((task) => task.priority), Object.values(Priority), priorityLabels),
       services: [...serviceStats.values()].sort((a, b) => b.value - a.value),
       activeSubscriptions: subscriptions.filter((subscription) => subscription.status === SubscriptionStatus.ACTIVE).length,
       monthlySubscriptions: subscriptions.filter((subscription) => subscription.interval === SubscriptionInterval.MONTHLY && subscription.status === SubscriptionStatus.ACTIVE).length,

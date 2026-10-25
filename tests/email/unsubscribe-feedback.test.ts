@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeUnsubscribeFeedback,
-  normalizeOptionalUnsubscribeFeedback,
   unsubscribeFeedbackReasonLabel,
 } from "../../src/lib/email/unsubscribe-feedback";
 
@@ -17,15 +16,9 @@ describe("unsubscribe feedback", () => {
     expect(normalizeUnsubscribeFeedback("NO_NEED", "   ").comment).toBeNull();
   });
 
-  it("allows a confirmation without feedback", () => {
-    expect(normalizeOptionalUnsubscribeFeedback("", "")).toBeNull();
-  });
-
-  it("keeps a comment without a selected reason as an other reason", () => {
-    expect(normalizeOptionalUnsubscribeFeedback("", "Une précision")).toEqual({
-      reasonCode: "OTHER",
-      comment: "Une précision",
-    });
+  it("requires a selected reason even when a comment is provided", () => {
+    expect(() => normalizeUnsubscribeFeedback("", "")).toThrow("invalide");
+    expect(() => normalizeUnsubscribeFeedback("", "Une précision")).toThrow("invalide");
   });
 
   it("rejects an unknown reason and an oversized comment", () => {

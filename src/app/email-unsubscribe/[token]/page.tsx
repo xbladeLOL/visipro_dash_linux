@@ -1,7 +1,7 @@
 import {prisma} from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { UnsubscribeForm } from "@/components/unsubscribe-form";
 import { emailTransaction } from "@/lib/email/store";
 import { findUnsubscribe, unsubscribeWithFeedback } from "@/lib/email/unsubscribe";
 import { unsubscribeFeedbackReasons } from "@/lib/email/unsubscribe-feedback";
@@ -44,12 +44,8 @@ export default async function UnsubscribePage({
         <div><p className="text-sm font-medium text-primary">VisiPro</p><h1 className="mt-1 text-3xl font-semibold tracking-tight">Préférences de contact</h1></div>
         {!done ? (
           <Card className="space-y-5">
-            <div><h2 className="text-lg font-semibold">Ne plus recevoir nos sollicitations</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Vous pouvez nous indiquer pourquoi avant de confirmer. Cette réponse est facultative et aucun compte n’est nécessaire.</p></div>
-            <form action={confirm.bind(null, token)} className="space-y-5">
-              <fieldset><legend className="text-sm font-medium">Quelle est la raison principale ? <span className="font-normal text-muted-foreground">(facultatif)</span></legend><div className="mt-3 space-y-2">{unsubscribeFeedbackReasons.map((reason) => <label key={reason.value} className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition hover:bg-muted/50"><input className="mt-0.5 h-4 w-4" type="radio" name="reasonCode" value={reason.value} /><span>{reason.label}</span></label>)}</div></fieldset>
-              <label className="block text-sm font-medium">Un commentaire à nous laisser ? <span className="font-normal text-muted-foreground">(facultatif)</span><textarea name="comment" maxLength={500} rows={4} className="mt-2 w-full resize-y rounded-lg border bg-background px-3 py-2 text-sm font-normal" placeholder="Votre remarque en quelques mots…" /></label>
-              <Button>Confirmer la désinscription</Button>
-            </form>
+            <div><h2 className="text-lg font-semibold">Ne plus recevoir nos sollicitations</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Sélectionnez la raison principale avant de confirmer. Le commentaire reste facultatif et aucun compte n’est nécessaire.</p></div>
+            <UnsubscribeForm action={confirm.bind(null, token)} reasons={unsubscribeFeedbackReasons} />
           </Card>
         ) : (
           <>
@@ -60,7 +56,7 @@ export default async function UnsubscribePage({
             {feedback ? <Card><h2 className="font-semibold">Merci pour votre réponse</h2><p className="mt-2 text-sm text-muted-foreground">Elle nous aidera à mieux cibler nos prochaines prises de contact.</p></Card> : null}
           </>
         )}
-        <p className="text-center text-xs text-muted-foreground">La désinscription est effective même si vous ne répondez pas au questionnaire.</p>
+        <p className="text-center text-xs text-muted-foreground">Le choix d’un motif est obligatoire. Le commentaire reste facultatif.</p>
       </div>
     </main>
   );
