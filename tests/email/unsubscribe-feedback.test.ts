@@ -16,6 +16,20 @@ describe("unsubscribe feedback", () => {
     expect(normalizeUnsubscribeFeedback("NO_NEED", "   ").comment).toBeNull();
   });
 
+  it("accepts the additional selectable reasons", () => {
+    for (const reason of [
+      "ALREADY_HAS_PROVIDER",
+      "HANDLED_INTERNALLY",
+      "NOT_RELEVANT",
+      "ALREADY_CUSTOMER",
+      "WRONG_CONTACT",
+      "BUSINESS_CLOSED",
+      "TOO_MANY_SOLICITATIONS",
+    ]) {
+      expect(normalizeUnsubscribeFeedback(reason, "").reasonCode).toBe(reason);
+    }
+  });
+
   it("requires a selected reason even when a comment is provided", () => {
     expect(() => normalizeUnsubscribeFeedback("", "")).toThrow("invalide");
     expect(() => normalizeUnsubscribeFeedback("", "Une précision")).toThrow("invalide");
