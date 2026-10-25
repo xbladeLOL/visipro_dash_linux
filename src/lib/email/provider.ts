@@ -1,5 +1,5 @@
 import nodemailer from "visipro-smtp";
-import { escapeEmailHtml, renderEmailBody } from "./content";
+import { renderProspectingEmail } from "./content";
 import { z } from "zod";
 import { deliveryMode, EmailError, tokenFor } from "./validation";
 
@@ -119,9 +119,7 @@ export function getProvider(): EmailProvider {
         `/email-unsubscribe/${tokenFor(message.id, message.recipientKey)}`,
         base,
       ).toString();
-      const content = renderEmailBody(message);
-      const html = `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#111827">${content.html}<hr /><p>VisiPro · ${escapeEmailHtml(identity)}</p><p><a href="${escapeEmailHtml(unsubscribe)}">Ne plus recevoir de sollicitations</a></p><p>Vous pouvez également répondre à ce message pour exercer votre opposition.</p></div>`;
-      const text = `${content.text}\n\n—\nVisiPro · ${identity}\nPour ne plus recevoir de sollicitations : ${unsubscribe}\nVous pouvez également répondre à ce message pour exercer votre opposition.`;
+      const {html,text} = renderProspectingEmail(message,{identity,unsubscribeUrl:unsubscribe});
       let deadline: ReturnType<typeof setTimeout> | undefined;
       try {
         const sending = transport.sendMail({

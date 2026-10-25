@@ -48,7 +48,7 @@ export default async function PricingItemEditPage({ params }: { params: Promise<
       <header className="rounded-3xl border bg-card p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2"><Link href={`/pricing/${catalog.id}`} className="text-sm text-muted-foreground hover:text-foreground">← Retour à la grille</Link><div><h1 className="text-3xl font-semibold">Modifier la prestation</h1><p className="text-muted-foreground">{item.name}</p></div></div>
-          <div className="flex gap-2"><Link href={`/pricing/${catalog.id}/preview`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Aperçu client</Link></div>
+          <div className="flex flex-wrap gap-2"><Link href={`/pricing/${catalog.id}/preview`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Aperçu client</Link></div>
         </div>
       </header>
 
@@ -57,7 +57,7 @@ export default async function PricingItemEditPage({ params }: { params: Promise<
         <input type="hidden" name="catalogId" value={catalog.id} />
 
         <Card>
-          <div className="mb-5 flex items-center justify-between gap-4"><div><h2 className="text-xl font-semibold">Informations commerciales</h2><p className="text-sm text-muted-foreground">Ce qui sera lu par le prospect dans la grille.</p></div><Button>Enregistrer</Button></div>
+          <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"><div><h2 className="text-xl font-semibold">Informations commerciales</h2><p className="text-sm text-muted-foreground">Ce qui sera lu par le prospect dans la grille.</p></div><Button>Enregistrer</Button></div>
           <div className="grid gap-5 md:grid-cols-2">
             <Field label="Nom de la prestation"><Input name="name" defaultValue={item.name} className="h-12 text-base" /></Field>
             <Field label="Catégorie"><Select name="categoryId" defaultValue={item.categoryId}>{catalog.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</Select></Field>
@@ -149,9 +149,9 @@ export default async function PricingItemEditPage({ params }: { params: Promise<
           </div>
         </Card>
 
-        <div className="sticky bottom-4 z-10 flex items-center justify-between rounded-2xl border bg-card/95 p-4 shadow-xl backdrop-blur">
+        <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-10 lg:bottom-4 flex items-center justify-between rounded-2xl border bg-card/95 p-4 shadow-xl backdrop-blur">
           <ConfirmSubmitButton formAction={deletePricingItem} message="Supprimer cette prestation ?" variant="ghost" className="text-red-600">Supprimer</ConfirmSubmitButton>
-          <div className="flex gap-2"><Link href={`/pricing/${catalog.id}`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Annuler</Link><Button>Enregistrer la prestation</Button></div>
+          <div className="flex flex-wrap gap-2"><Link href={`/pricing/${catalog.id}`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Annuler</Link><Button>Enregistrer la prestation</Button></div>
         </div>
       </form>
     </div>

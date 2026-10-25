@@ -29,6 +29,133 @@ body {
   color: hsl(var(--foreground));
 }
 
+#main-content {
+  overflow-wrap: anywhere;
+}
+
+#main-content :where(.flex, .grid) > * {
+  min-width: 0;
+}
+
+#main-content select {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.responsive-table {
+  scroll-margin-top: 5rem;
+}
+
+@media screen and (max-width: 767px) {
+  #main-content .app-card:not(.p-0) {
+    padding: 1rem;
+  }
+
+  .responsive-table,
+  .responsive-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .responsive-table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    background: hsl(var(--card));
+  }
+
+  .responsive-table tbody td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0.5rem 0;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table tbody td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.25rem;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .responsive-table tbody td:empty {
+    display: none;
+  }
+
+  .responsive-table td :where(.truncate, .whitespace-nowrap) {
+    max-width: 100%;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .responsive-table td :where(.flex) {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .responsive-table td a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  #main-content button {
+    max-width: 100%;
+    height: auto;
+    min-height: 44px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    white-space: normal;
+  }
+
+  #main-content :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  #main-content input:where([type="checkbox"], [type="radio"]) {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  #main-content :where(a.rounded-lg, a.rounded-xl, summary) {
+    min-height: 44px;
+  }
+
+  #main-content :where(a.rounded-lg, a.rounded-xl):not(.block):not(.flex) {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  main :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea, button, summary) {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
 * {
   border-color: hsl(var(--border));
 }

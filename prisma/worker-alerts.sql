@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS worker_alerts (id TEXT PRIMARY KEY, project TEXT NOT NULL, operation TEXT NOT NULL, code TEXT NOT NULL, message TEXT NOT NULL, "logPath" TEXT NOT NULL, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "lastSeenAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(), occurrences INTEGER NOT NULL DEFAULT 1, "acknowledgedAt" TIMESTAMPTZ, "acknowledgedBy" TEXT);
+CREATE INDEX IF NOT EXISTS worker_alerts_active ON worker_alerts ("createdAt") WHERE "acknowledgedAt" IS NULL;

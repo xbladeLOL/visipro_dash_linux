@@ -247,6 +247,7 @@ model Prospect {
   notes           String?       @db.Text
   potentialValue  Decimal       @default(0) @db.Decimal(12, 2)
   stage           ProspectStage @default(NEW)
+  lostAt          DateTime?
   nextAction      String?
   nextFollowUpAt  DateTime?
   convertedClient Client?
@@ -835,8 +836,21 @@ model EmailSuppression {
   maskedEmail  String
   createdAt    DateTime @default(now())
   actorId      String?
+  feedback     EmailUnsubscribeFeedback?
 
   @@map("email_suppressions")
+}
+
+model EmailUnsubscribeFeedback {
+  recipientKey String   @id
+  reasonCode   String   @db.VarChar(64)
+  comment      String?  @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  suppression  EmailSuppression @relation(fields: [recipientKey], references: [recipientKey], onDelete: Cascade)
+
+  @@index([reasonCode])
+  @@map("email_unsubscribe_feedback")
 }
 
 model EmailApiRateLimit {
@@ -845,4 +859,19 @@ model EmailApiRateLimit {
   count       Int
 
   @@map("email_api_rate_limits")
+}
+
+model WorkerAlert {
+ id String @id
+ project String
+ operation String
+ code String
+ message String
+ logPath String
+ createdAt DateTime @default(now()) @db.Timestamptz(6)
+ lastSeenAt DateTime @default(now()) @db.Timestamptz(6)
+ occurrences Int @default(1)
+ acknowledgedAt DateTime? @db.Timestamptz(6)
+ acknowledgedBy String?
+ @@map("worker_alerts")
 }

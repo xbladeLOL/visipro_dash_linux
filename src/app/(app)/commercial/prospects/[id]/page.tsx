@@ -1,3 +1,4 @@
+import {recipientKey} from "@/lib/email/validation";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,7 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
     }
   });
   if (!prospect) notFound();
+  const suppression = prospect.email ? await prisma.emailSuppression.findUnique({where:{recipientKey:recipientKey(prospect.email)}}) : null;
   const googleMapsUrl = prospect.notes?.match(/^Fiche Google\s*:\s*(https:\/\/www\.google\.com\/maps\S*)\s*$/m)?.[1]
     ?? (prospect.source?.startsWith("VisiPro Detection:")
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${prospect.companyName} ${prospect.address ?? prospect.city ?? ""}`)}`
@@ -25,7 +27,8 @@ export default async function ProspectDetailPage({ params }: { params: Promise<{
   const displayedNotes = prospect.notes?.replace(/^Fiche Google\s*:\s*https:\/\/www\.google\.com\/maps\S*\s*$/m, "").trim();
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"><div><h1 className="text-3xl font-semibold">{prospect.companyName}</h1><p className="text-muted-foreground">{formatProspectStage(prospect.stage)} - potentiel {formatCurrency(Number(prospect.potentialValue))}</p></div>{prospect.convertedClient ? <Link href={`/commercial/clients/${prospect.convertedClient.id}`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Voir client converti</Link> : null}</div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"><div><h1 className="text-3xl font-semibold">{prospect.companyName}</h1><p className="text-muted-foreground">{formatProspectStage(prospect.stage)} - potentiel {formatCurrency(Number(prospect.potentialValue))}</p>{prospect.stage === "LOST" && prospect.lostAt ? <p className="mt-1 text-sm font-medium text-rose-700">Perdu le {prospect.lostAt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}</p> : null}</div>{prospect.convertedClient ? <Link href={`/commercial/clients/${prospect.convertedClient.id}`} className="rounded-lg border px-4 py-2 text-sm hover:bg-muted">Voir client converti</Link> : null}</div>
+      {suppression && <Card className="border-red-500"><p className="font-semibold">Opposition enregistrée — ne plus contacter</p><p>Enregistrée le {suppression.createdAt.toLocaleString("fr-FR")}. Aucune nouvelle sollicitation pour cette adresse.</p></Card>}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card><h2 className="font-semibold">Entreprise</h2><dl className="mt-4 space-y-2 text-sm"><div>Contact : {prospect.contactName ?? "-"}</div><div>Email : {prospect.email ?? "-"}</div><div>Téléphone : {prospect.phone ?? "-"}</div><div>Site web : {prospect.website ? <a href={prospect.website} target="_blank" rel="noreferrer" className="underline">{prospect.website}</a> : "-"}</div><div>Adresse : {prospect.address ?? "-"}</div><div>Ville : {prospect.city ?? "-"}</div><div>Activité : {prospect.activity ?? "-"}</div><div>Source : {prospect.source ?? "-"}</div></dl>{googleMapsUrl?<a className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" href={googleMapsUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ouvrir la fiche Google Maps de ${prospect.companyName}`}>Voir la fiche Google Maps ↗</a>:null}</Card>
         <Card><h2 className="font-semibold">Prochaine action</h2><p className="mt-4 text-sm text-muted-foreground">{prospect.nextAction ?? "Aucune action planifiée"}</p><p className="mt-3 text-sm">Relance : {prospect.nextFollowUpAt?.toLocaleDateString("fr-FR") ?? "-"}</p></Card>

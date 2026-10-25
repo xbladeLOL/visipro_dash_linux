@@ -36,11 +36,11 @@ export default async function PricingCatalogPage({ params, searchParams }: { par
             <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground">← Retour aux grilles</Link>
             <div><h1 className="text-3xl font-semibold tracking-tight">{catalog.name}</h1><p className="text-muted-foreground">{catalog.items.length} prestations · {catalog.categories.length} catégories · {statusLabels[catalog.status]}{catalog.client || catalog.prospect ? ` · ${catalog.client?.legalName ?? catalog.prospect?.companyName}` : ""}</p></div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="relative flex flex-wrap gap-2">
             <Link href={`/pricing/${catalog.id}/preview`} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">Aperçu client</Link>
-            <details className="relative">
+            <details className="static sm:relative">
               <summary className="flex h-10 cursor-pointer list-none items-center rounded-lg border px-4 text-sm hover:bg-muted">Exporter</summary>
-              <div className="absolute right-0 z-10 mt-2 w-48 rounded-xl border bg-card p-2 shadow-xl">
+              <div className="absolute left-0 right-0 z-10 mt-2 w-auto sm:left-auto sm:w-48 rounded-xl border bg-card p-2 shadow-xl">
                 <a href={`/api/pricing/${catalog.id}/export?format=pdf&mode=COMPACT`} className="block rounded-lg px-3 py-2 text-sm hover:bg-muted">PDF compact</a>
                 <a href={`/api/pricing/${catalog.id}/export?format=pdf&mode=STANDARD`} className="block rounded-lg px-3 py-2 text-sm hover:bg-muted">PDF standard</a>
                 <a href={`/api/pricing/${catalog.id}/export?format=pdf&mode=DETAILED`} className="block rounded-lg px-3 py-2 text-sm hover:bg-muted">PDF détaillé</a>
@@ -50,9 +50,9 @@ export default async function PricingCatalogPage({ params, searchParams }: { par
                 <span className="block rounded-lg px-3 py-2 text-sm text-muted-foreground">DOCX bientôt</span>
               </div>
             </details>
-            <details className="relative">
+            <details className="static sm:relative">
               <summary className="flex h-10 cursor-pointer list-none items-center rounded-lg border px-4 text-sm hover:bg-muted">⋯</summary>
-              <div className="absolute right-0 z-10 mt-2 w-56 rounded-xl border bg-card p-2 shadow-xl"><form action={archivePricingCatalog}><input type="hidden" name="id" value={catalog.id} /><ConfirmSubmitButton message="Archiver cette grille ?" variant="ghost" className="w-full justify-start text-red-600">Archiver la grille</ConfirmSubmitButton></form></div>
+              <div className="absolute left-0 right-0 z-10 mt-2 w-auto sm:left-auto sm:w-56 rounded-xl border bg-card p-2 shadow-xl"><form action={archivePricingCatalog}><input type="hidden" name="id" value={catalog.id} /><ConfirmSubmitButton message="Archiver cette grille ?" variant="ghost" className="w-full justify-start text-red-600">Archiver la grille</ConfirmSubmitButton></form></div>
             </details>
           </div>
         </div>

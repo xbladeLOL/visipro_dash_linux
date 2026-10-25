@@ -1,3 +1,4 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import Link from "next/link";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { Card } from "@/components/ui/card";
@@ -10,7 +11,7 @@ export default async function TasksPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-3xl font-semibold">Tâches</h1>
           <p className="text-muted-foreground">Aujourd&apos;hui, semaine, retard et toutes les tâches.</p>
@@ -18,7 +19,7 @@ export default async function TasksPage() {
         <Link href="/tasks/new" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouvelle tâche</Link>
       </div>
       <Card className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <ResponsiveTable className="w-full text-sm">
           <thead>
             <tr className="text-left text-muted-foreground">
               <th className="py-2">Tâche</th>
@@ -52,7 +53,7 @@ export default async function TasksPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
       </Card>
     </div>
   );

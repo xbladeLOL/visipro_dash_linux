@@ -1,3 +1,6 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import Link from "next/link";
 import { EmailStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +12,29 @@ import { approveEmails, createEmail } from "@/features/emails/actions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+
+type PowerState = {
+  status?: string;
+  wakeAt?: number;
+  attempts?: number;
+  confirmedAt?: number;
+  failedAt?: number;
+  failureReason?: string;
+};
+
+async function getPowerState(): Promise<PowerState | null> {
+  try {
+    return JSON.parse(
+      await readFile(
+        path.join(process.cwd(), ".visipro", "power", "wake.json"),
+        "utf8",
+      ),
+    ) as PowerState;
+  } catch {
+    return null;
+  }
+}
+
 export default async function EmailsPage({
   searchParams,
 }: {
@@ -16,7 +42,10 @@ export default async function EmailsPage({
 }) {
   await requireEmailUser();
   const params = await searchParams;
-  const settings = await emailTransaction(getSettings);
+  const [settings, powerState] = await Promise.all([
+    emailTransaction(getSettings),
+    getPowerState(),
+  ]);
   const status = Object.values(EmailStatus).includes(
     params.status as EmailStatus,
   )
@@ -70,6 +99,8 @@ export default async function EmailsPage({
       orderBy: { scheduledAt: "asc" },
     }),
   ]);
+  const suppressions = await prisma.emailSuppression.findMany({where:{recipientKey:{in:rows.map(row=>row.recipientKey)}},select:{recipientKey:true}});
+  const suppressedKeys = new Set(suppressions.map(row=>row.recipientKey));
   const count = (value: EmailStatus, simulated?: boolean) =>
     counts
       .filter(
@@ -88,6 +119,20 @@ export default async function EmailsPage({
   const heartbeat =
     settings.workerHeartbeat &&
     Date.now() - settings.workerHeartbeat.getTime() < 120000;
+  const powerStatus =
+    powerState?.status === "online_confirmed"
+      ? "PC en ligne confirmé par Tailscale"
+      : powerState?.status === "failed"
+        ? "Échec du réveil : le PC n’est pas revenu en ligne"
+        : ["waking", "sent", "awaiting_online"].includes(
+              powerState?.status ?? "",
+            )
+          ? "Paquets de réveil envoyés, confirmation Tailscale en attente"
+          : powerState?.status === "pending"
+            ? "Réveil programmé"
+            : powerState?.status === "cancelled"
+              ? "Réveil annulé"
+              : "Aucun réveil programmé";
   return (
     <div className="space-y-6">
       <div>
@@ -120,12 +165,33 @@ export default async function EmailsPage({
           · {settings.enabled ? "Programmation active" : "En pause"}
         </p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Worker : {heartbeat ? "actif" : "aucun signal récent"} · Dernier
+          Worker e-mail du serveur : {heartbeat ? "actif" : "aucun signal récent"} · Dernier
           signal : {dateLabel(settings.workerHeartbeat, settings.timezone)}. Les
-          échéances ne sont pas une garantie d’envoi si le worker est arrêté.
+          échéances d’e-mail ne sont pas une garantie d’envoi si ce worker est arrêté.
         </p>
       </Card>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <Card
+        className={
+          powerState?.status === "failed"
+            ? "border-red-400 bg-red-50/60 dark:bg-red-950/20"
+            : undefined
+        }
+      >
+        <p className="font-semibold">PC du worker de maquettes</p>
+        <p className="mt-2 text-sm">{powerStatus}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Réveil prévu :{" "}
+          {dateLabel(
+            powerState?.wakeAt ? new Date(powerState.wakeAt * 1000) : null,
+            settings.timezone,
+          )}
+          {typeof powerState?.attempts === "number"
+            ? ` · ${powerState.attempts} tentative(s) WOL`
+            : ""}
+          . Ce statut est distinct du worker e-mail du serveur.
+        </p>
+      </Card>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
         {[
           ["À valider", count("draft")],
           ["Programmés", count("scheduled")],
@@ -167,7 +233,7 @@ export default async function EmailsPage({
             aria-label="Statut"
             name="status"
             defaultValue={status ?? ""}
-            className="rounded-lg border bg-card p-2"
+            className="min-w-0 w-full rounded-lg border bg-card p-2 sm:w-auto"
           >
             <option value="">Tous les statuts</option>
             {Object.entries(statusLabels).map(([key, label]) => (
@@ -180,7 +246,7 @@ export default async function EmailsPage({
             aria-label="Tri"
             name="sort"
             defaultValue={params.sort ?? "newest"}
-            className="rounded-lg border bg-card p-2"
+            className="min-w-0 w-full rounded-lg border bg-card p-2 sm:w-auto"
           >
             <option value="newest">Plus récents</option>
             <option value="oldest">Plus anciens</option>
@@ -190,14 +256,14 @@ export default async function EmailsPage({
           <Button variant="secondary">Filtrer</Button>
         </form>
       </Card>
-      <form id="bulk-approval" action={approveEmails}>
+      <form id="bulk-approval" action={approveEmails} className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <Button>Valider les brouillons cochés</Button>
-        <span className="ml-3 text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           50 messages par page · {total} résultat(s)
         </span>
       </form>
       <Card className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <ResponsiveTable className="w-full text-left text-sm">
           <thead>
             <tr className="border-b">
               <th className="p-2">Valider</th>
@@ -244,6 +310,7 @@ export default async function EmailsPage({
                   {message.status === "sent" && message.simulated
                     ? "Simulation terminée"
                     : statusLabels[message.status]}
+                  {suppressedKeys.has(message.recipientKey) && <p className="font-semibold text-red-700">Opposition enregistrée — ne plus contacter</p>}
                   {message.reviewRequired && (
                     <p className="font-semibold text-amber-700">
                       Résultat incertain · contrôle manuel
@@ -261,14 +328,14 @@ export default async function EmailsPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
         {!rows.length && (
           <p className="py-6 text-muted-foreground">
             Aucun message pour ces filtres.
           </p>
         )}
       </Card>
-      <div className="flex gap-5 text-sm">
+      <div className="flex flex-wrap items-center gap-4 text-sm">
         {page > 1 && <Link href={pagination(page - 1)}>← Précédent</Link>}
         <span>Page {page}</span>
         {page * 50 < total && (

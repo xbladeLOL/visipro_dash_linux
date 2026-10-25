@@ -1,3 +1,4 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import Link from "next/link";
 import { Prisma, ProspectStage } from "@prisma/client";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
@@ -90,20 +91,20 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
 
       <Card className="overflow-hidden p-0">
         <div className="flex flex-col gap-2 border-b p-4 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="font-semibold">{selectedStage ? formatProspectStage(selectedStage) : "Tous les prospects"}</h2><p className="text-sm text-muted-foreground">{total} résultat{total > 1 ? "s" : ""} · page {currentPage} sur {totalPages}</p></div><p className="text-xs text-muted-foreground">Cliquez sur une entreprise pour ouvrir sa fiche complète.</p></div>
-        <div className="overflow-x-auto"><table className="w-full min-w-[960px] text-sm">
+        <div className="overflow-x-auto"><ResponsiveTable className="w-full min-w-[960px] text-sm">
           <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground"><tr><th className="px-4 py-3">Entreprise</th><th className="px-4 py-3">Coordonnées</th><th className="px-4 py-3">Localisation</th><th className="px-4 py-3">Statut</th><th className="px-4 py-3">Suivi</th><th className="px-4 py-3 text-right">Actions</th></tr></thead>
           <tbody>
             {prospects.map((prospect) => <tr key={prospect.id} className="border-t align-top transition hover:bg-muted/40">
               <td className="px-4 py-3"><Link className="font-semibold text-foreground hover:text-primary hover:underline" href={`/commercial/prospects/${prospect.id}`}>{prospect.companyName}</Link><div className="mt-1 text-xs text-muted-foreground">{prospect.activity ?? "Activité non renseignée"}</div><div className="mt-1 text-xs font-medium">{formatCurrency(Number(prospect.potentialValue))}</div></td>
               <td className="px-4 py-3"><div>{prospect.phone ?? "Aucun téléphone"}</div><div className="mt-1 max-w-52 truncate text-xs text-muted-foreground" title={prospect.email ?? undefined}>{prospect.email ?? "Aucun email"}</div></td>
               <td className="px-4 py-3"><div>{prospect.city ?? "Ville inconnue"}</div><div className="mt-1 max-w-48 truncate text-xs text-muted-foreground" title={prospect.address ?? undefined}>{prospect.address ?? "Adresse non renseignée"}</div></td>
-              <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${stageStyles[prospect.stage]}`}>{formatProspectStage(prospect.stage)}</span></td>
+              <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${stageStyles[prospect.stage]}`}>{formatProspectStage(prospect.stage)}</span>{prospect.stage === ProspectStage.LOST && prospect.lostAt ? <div className="mt-1 text-xs text-muted-foreground">Perdu le {prospect.lostAt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}</div> : null}</td>
               <td className="px-4 py-3"><div className="max-w-48">{prospect.nextAction ?? "Aucune action"}</div><div className="mt-1 text-xs text-muted-foreground">{prospect.nextFollowUpAt ? `Relance le ${prospect.nextFollowUpAt.toLocaleDateString("fr-FR")}` : "Aucune relance prévue"}</div></td>
               <td className="px-4 py-3"><div className="flex justify-end gap-2"><form action={updateProspectStage} className="flex gap-1"><input type="hidden" name="id" value={prospect.id} /><select aria-label={`Modifier le statut de ${prospect.companyName}`} name="stage" defaultValue={prospect.stage} className="h-8 max-w-32 rounded-lg border bg-card px-2 text-xs">{stages.map((stage) => <option key={stage} value={stage}>{formatProspectStage(stage)}</option>)}</select><button className="h-8 rounded-lg border px-2 text-xs hover:bg-muted">OK</button></form><form action={deleteProspect}><input type="hidden" name="id" value={prospect.id} /><ConfirmSubmitButton message="Supprimer ce prospect ?" variant="ghost" className="h-8 px-2 text-xs text-red-600">Supprimer</ConfirmSubmitButton></form></div></td>
             </tr>)}
             {prospects.length === 0 ? <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Aucun prospect ne correspond à ces filtres.</td></tr> : null}
           </tbody>
-        </table></div>
+        </ResponsiveTable></div>
         {totalPages > 1 ? <div className="flex items-center justify-between gap-3 border-t p-4"><Link aria-disabled={currentPage === 1} className={`rounded-lg border px-3 py-2 text-sm ${currentPage === 1 ? "pointer-events-none opacity-40" : "hover:bg-muted"}`} href={prospectUrl(params, { page: String(currentPage - 1) })}>← Précédent</Link><span className="text-sm text-muted-foreground">{(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, total)} sur {total}</span><Link aria-disabled={currentPage === totalPages} className={`rounded-lg border px-3 py-2 text-sm ${currentPage === totalPages ? "pointer-events-none opacity-40" : "hover:bg-muted"}`} href={prospectUrl(params, { page: String(currentPage + 1) })}>Suivant →</Link></div> : null}
       </Card>
     </div>

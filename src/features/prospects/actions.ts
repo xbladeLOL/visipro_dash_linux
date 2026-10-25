@@ -22,21 +22,40 @@ export async function createProspect(formData: FormData) {
     nextAction: formData.get("nextAction") || undefined,
     nextFollowUpAt: formData.get("nextFollowUpAt") || undefined
   });
-  await prisma.prospect.create({ data: parsed });
+  await prisma.prospect.create({
+    data: {
+      ...parsed,
+      lostAt: parsed.stage === ProspectStage.LOST ? new Date() : null
+    }
+  });
   revalidatePath("/commercial/prospects");
   redirect("/commercial/prospects");
 }
 
 export async function moveProspectStage(id: string, stage: ProspectStage) {
-  await prisma.prospect.update({ where: { id }, data: { stage } });
+  await setProspectStage(id, stage);
   revalidatePath("/commercial/prospects");
 }
 
 export async function updateProspectStage(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const stage = String(formData.get("stage") ?? ProspectStage.NEW) as ProspectStage;
-  await prisma.prospect.update({ where: { id }, data: { stage } });
+  await setProspectStage(id, stage);
   revalidatePath("/commercial/prospects");
+}
+
+async function setProspectStage(id: string, stage: ProspectStage) {
+  const prospect = await prisma.prospect.findUniqueOrThrow({
+    where: { id },
+    select: { lostAt: true }
+  });
+  await prisma.prospect.update({
+    where: { id },
+    data: {
+      stage,
+      lostAt: stage === ProspectStage.LOST ? prospect.lostAt ?? new Date() : null
+    }
+  });
 }
 
 export async function deleteProspect(formData: FormData) {

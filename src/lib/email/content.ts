@@ -57,3 +57,23 @@ export function renderEmailBody(input: EmailBodyInput) {
     .join("");
   return { html, text };
 }
+
+// Normalise uniquement les anciennes signatures et mentions gérées par le pied commun.
+export function prepareProspectingBody(body: string) {
+  let text = body.replace(/\r\n?/g, "\n");
+  text = text.replace(/^Si vous ne souhaitez pas être recontacté[^\n]*[\n]*/gmi, "");
+  text = text.replace(/Je suis Étienne, de VisiPro\.\s*/g, "");
+  text = text.replace(/(^|\n)Bonne journée[, .!]*[ \t]*(?:\n(?:Étienne(?:[ —-]+VisiPro)?|VisiPro|visiprofessionnel@gmail\.com)[ \t]*(?=\n|$))*/gi, "$1Bonne journée");
+  return text.trim();
+}
+export function renderProspectingEmail(input: EmailBodyInput, options: {identity: string; unsubscribeUrl?: string}) {
+  const content = renderEmailBody({...input, body: prepareProspectingBody(input.body)});
+  const details = options.identity.replace(/^(?:Étienne\s*[·—-]\s*)?(?:VisiPro\s*[·—-]\s*)+/i, "").trim();
+  const identity = "Étienne — VisiPro" + (details ? " · " + details : "");
+  const link = options.unsubscribeUrl
+    ? '<a href="'+escapeEmailHtml(options.unsubscribeUrl)+'" style="color:#1d4ed8;text-decoration:underline">Ne plus recevoir de sollicitations</a>'
+    : '<span style="color:#1d4ed8;text-decoration:underline">Ne plus recevoir de sollicitations</span>';
+  const html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#111827;background:#fff;padding:16px;overflow-wrap:anywhere">'+content.html+'<hr style="border:0;border-top:1px solid #d1d5db;margin:24px 0 16px"/><p>'+escapeEmailHtml(identity)+'</p><p>'+link+'</p><p>Vous pouvez également répondre à ce message pour exercer votre opposition.</p></div>';
+  const text = content.text+'\n\n—\n'+identity+'\nPour ne plus recevoir de sollicitations : '+(options.unsubscribeUrl || '[lien personnel ajouté à l’envoi]')+'\nVous pouvez également répondre à ce message pour exercer votre opposition.';
+  return {html,text};
+}

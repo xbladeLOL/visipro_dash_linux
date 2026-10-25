@@ -1,5 +1,6 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { notFound } from "next/navigation";
-import { renderEmailBody } from "@/lib/email/content";
+import { renderProspectingEmail } from "@/lib/email/content";
 import { prisma } from "@/lib/prisma";
 import { requireEmailUser } from "@/lib/email/access";
 import { emailTransaction, getSettings } from "@/lib/email/store";
@@ -29,8 +30,9 @@ export default async function EmailPage({
   });
   if (!message || message.deletedAt) notFound();
   const settings = await emailTransaction(getSettings);
-  const preview = renderEmailBody(message);
-  const canEdit =
+  const preview = renderProspectingEmail(message,{identity:process.env.EMAIL_SENDER_IDENTITY ?? 'visiprofessionnel@gmail.com'});
+  const suppression = await prisma.emailSuppression.findUnique({where:{recipientKey:message.recipientKey}});
+  const canEdit = !suppression &&
     !["sent", "sending", "suppressed"].includes(message.status) &&
     !message.reviewRequired;
   const hidden = (
@@ -55,6 +57,7 @@ export default async function EmailPage({
           {dateLabel(message.scheduledAt, settings.timezone)}
         </p>
       </div>
+      {suppression && <Card className="border-red-500"><p className="font-semibold">Opposition enregistrée — ne plus contacter</p><p>Depuis le {dateLabel(suppression.createdAt, settings.timezone)}. Motif : {suppression.reason}. L’historique des envois reste conservé.</p></Card>}
       {message.reviewRequired && (
         <Card className="space-y-3 border-amber-500">
           <p className="font-semibold">
@@ -88,16 +91,16 @@ export default async function EmailPage({
         </Card>
       )}
       <Card className="space-y-3">
-        <h2 className="font-semibold">Aperçu du message enregistré</h2>
+        <h2 className="font-semibold">Aperçu complet du message</h2>
         <p className="text-sm text-muted-foreground">
           Pour un lien nommé, écrivez [Découvrir la
           maquette](https://adresse-de-la-maquette). Le champ Maquette VisiPro
           ajoute automatiquement ce lien s’il n’est pas déjà dans le texte.
-          Enregistrez vos modifications pour actualiser cet aperçu.
+          Enregistrez vos modifications pour actualiser cet aperçu. Le pied de mail est inclus ; le lien de désinscription est désactivé dans l’aperçu.
         </p>
         <div
           data-testid="email-content-preview"
-          className="break-words rounded-lg border bg-card p-5"
+          className="break-words rounded-lg border bg-white text-slate-900 p-0"
           dangerouslySetInnerHTML={{ __html: preview.html }}
         />
         {message.status === "sent" && (
@@ -269,7 +272,7 @@ export default async function EmailPage({
       </Card>
       <Card className="overflow-x-auto">
         <h2 className="mb-4 font-semibold">Historique des tentatives</h2>
-        <table className="w-full text-left text-sm">
+        <ResponsiveTable className="w-full text-left text-sm">
           <thead>
             <tr>
               <th>Date</th>
@@ -312,7 +315,7 @@ export default async function EmailPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
         {!message.attempts.length && <p>Aucune tentative.</p>}
       </Card>
     </div>

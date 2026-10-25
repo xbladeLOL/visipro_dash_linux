@@ -15,3 +15,10 @@ Thumbs.db
 .email-test-data/
 .email-preview-data/
 .email-test-results/
+
+# Runtime state, local deployment bundles and generated Python caches
+.visipro/
+.*-backup*/
+.*-release*/
+__pycache__/
+*.py[cod]

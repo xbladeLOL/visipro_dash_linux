@@ -154,12 +154,16 @@ describe("email schedule and safe provider", () => {
     }
   });
   it("locks real sending without the explicit environment gate", () => {
-    const before = process.env.EMAIL_DELIVERY_MODE;
+    const beforeMode = process.env.EMAIL_DELIVERY_MODE;
+    const beforeGate = process.env.EMAIL_REAL_SEND_ENABLED;
     process.env.EMAIL_DELIVERY_MODE = "smtp";
+    delete process.env.EMAIL_REAL_SEND_ENABLED;
     try {
       expect(() => getProvider()).toThrow("verrouillé");
     } finally {
-      process.env.EMAIL_DELIVERY_MODE = before;
+      process.env.EMAIL_DELIVERY_MODE = beforeMode;
+      if (beforeGate === undefined) delete process.env.EMAIL_REAL_SEND_ENABLED;
+      else process.env.EMAIL_REAL_SEND_ENABLED = beforeGate;
     }
   });
 });

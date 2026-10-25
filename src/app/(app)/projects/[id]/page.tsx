@@ -1,3 +1,4 @@
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { notFound } from "next/navigation";
 import { Priority } from "@prisma/client";
 import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
@@ -57,7 +58,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       <Card className="overflow-x-auto">
         <h2 className="mb-4 font-semibold">Tâches du projet</h2>
-        <table className="w-full text-sm">
+        <ResponsiveTable className="w-full text-sm">
           <thead><tr className="text-left text-muted-foreground"><th className="py-2">Tâche</th><th>Priorité</th><th>Statut</th><th>Échéance</th><th className="text-right">Actions</th></tr></thead>
           <tbody>
             {project.tasks.map((task) => (
@@ -73,7 +74,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               </tr>
             ))}
           </tbody>
-        </table>
+        </ResponsiveTable>
         {project.tasks.length === 0 ? <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">Aucune tâche pour ce projet. Ajoute une tâche pour suivre la completion.</div> : null}
       </Card>
     </div>

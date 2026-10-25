@@ -2,6 +2,7 @@ import { startOfMonth, startOfYear, subMonths } from "date-fns";
 import { InvoiceStatus, ProspectStage, TransactionType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { calculateMrr } from "@/lib/financial";
+import { unsubscribeFeedbackReasonLabel } from "@/lib/email/unsubscribe-feedback";
 
 export async function getDashboardMetrics() {
   const now = new Date();
@@ -57,4 +58,29 @@ export async function getMonthlyFinancials() {
     buckets.set(month, current);
   }
   return [...buckets.values()];
+}
+
+export async function getUnsubscribeFeedbackStats() {
+  const [totalSuppressions, totalResponses, grouped] = await Promise.all([
+    prisma.emailSuppression.count(),
+    prisma.emailUnsubscribeFeedback.count(),
+    prisma.emailUnsubscribeFeedback.groupBy({
+      by: ["reasonCode"],
+      _count: { _all: true },
+    }),
+  ]);
+  const reasons = grouped
+    .map((row) => ({
+      reasonCode: row.reasonCode,
+      label: unsubscribeFeedbackReasonLabel(row.reasonCode),
+      count: row._count._all,
+      percentage: totalResponses === 0 ? 0 : row._count._all / totalResponses,
+    }))
+    .sort((a, b) => b.count - a.count);
+  return {
+    totalSuppressions,
+    totalResponses,
+    responseRate: totalSuppressions === 0 ? 0 : totalResponses / totalSuppressions,
+    reasons,
+  };
 }
