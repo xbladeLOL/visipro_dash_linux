@@ -75,11 +75,11 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
         <div className="flex flex-col gap-2 sm:flex-row"><Link href="/commercial/appels" className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border bg-card px-4 text-sm font-medium transition hover:bg-muted">Prospects à appeler</Link><Link href="/commercial/prospects/new" className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link></div>
       </div>
 
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
-        <Link href={prospectUrl(params, { stage: "", page: "1" })} className={`min-w-44 snap-start rounded-xl border p-4 transition hover:border-primary sm:min-w-0 ${!selectedStage ? "border-primary bg-primary/5" : "bg-card"}`}>
+      <div className="mobile-stage-scroll -mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+        <Link href={prospectUrl(params, { stage: "", page: "1" })} className={`w-44 flex-none snap-start rounded-xl border p-4 transition hover:border-primary sm:w-auto ${!selectedStage ? "border-primary bg-primary/5" : "bg-card"}`}>
           <div className="text-sm text-muted-foreground">Tous</div><div className="mt-1 text-2xl font-semibold">{allProspectsCount}</div>
         </Link>
-        {stages.map((stage) => <Link key={stage} href={prospectUrl(params, { stage, page: "1" })} className={`min-w-44 snap-start rounded-xl border p-4 transition hover:border-primary sm:min-w-0 ${selectedStage === stage ? "border-primary bg-primary/5" : "bg-card"}`}><div className="flex items-center justify-between gap-2"><span className={`rounded-full px-2 py-1 text-xs font-medium ${stageStyles[stage]}`}>{formatProspectStage(stage)}</span><strong className="text-xl">{counts.get(stage) ?? 0}</strong></div></Link>)}
+        {stages.map((stage) => <Link key={stage} href={prospectUrl(params, { stage, page: "1" })} className={`w-44 flex-none snap-start rounded-xl border p-4 transition hover:border-primary sm:w-auto ${selectedStage === stage ? "border-primary bg-primary/5" : "bg-card"}`}><div className="flex items-center justify-between gap-2"><span className={`rounded-full px-2 py-1 text-xs font-medium ${stageStyles[stage]}`}>{formatProspectStage(stage)}</span><strong className="text-xl">{counts.get(stage) ?? 0}</strong></div></Link>)}
       </div>
 
       <Card><form className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_220px_auto_auto]">
