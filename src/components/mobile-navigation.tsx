@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Gauge, Users, Mail, BriefcaseBusiness, Menu, X } from "lucide-react";
+import { Gauge, Users, Mail, PhoneCall, Menu, X } from "lucide-react";
 import { groups } from "./navigation-groups";
 
 const shortcuts = [
   { href: "/dashboard", label: "Accueil", icon: Gauge },
   { href: "/commercial/prospects", label: "Prospects", icon: Users },
   { href: "/commercial/emails", label: "E-mails", icon: Mail },
-  { href: "/projects", label: "Projets", icon: BriefcaseBusiness },
+  { href: "/commercial/appels", label: "Appels", icon: PhoneCall },
 ];
 
 export function MobileNavigation() {

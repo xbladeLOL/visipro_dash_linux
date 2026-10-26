@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { ProspectStage } from "@prisma/client";
+import { PhoneQualificationStatus, ProspectStage } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { prospectSchema } from "@/lib/validations";
 
@@ -42,6 +42,23 @@ export async function updateProspectStage(formData: FormData) {
   const stage = String(formData.get("stage") ?? ProspectStage.NEW) as ProspectStage;
   await setProspectStage(id, stage);
   revalidatePath("/commercial/prospects");
+}
+
+export async function updatePhoneQualification(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const requestedStatus = String(formData.get("status") ?? "");
+  if (!id || !Object.values(PhoneQualificationStatus).includes(requestedStatus as PhoneQualificationStatus)) return;
+
+  const status = requestedStatus as PhoneQualificationStatus;
+  await prisma.prospect.update({
+    where: { id },
+    data: {
+      phoneQualificationStatus: status,
+      phoneQualifiedAt: status === PhoneQualificationStatus.PENDING ? null : new Date()
+    }
+  });
+  revalidatePath("/commercial/appels");
+  revalidatePath(`/commercial/prospects/${id}`);
 }
 
 async function setProspectStage(id: string, stage: ProspectStage) {

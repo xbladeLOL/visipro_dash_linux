@@ -9,6 +9,7 @@ import { deleteProspect, updateProspectStage } from "@/features/prospects/action
 import { formatProspectStage } from "@/lib/labels";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
+import { toPhoneHref } from "@/lib/contact-links";
 
 const stages = Object.values(ProspectStage);
 const pageSize = 25;
@@ -71,14 +72,14 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div><h1 className="text-3xl font-semibold">Prospects</h1><p className="text-muted-foreground">Analysez et traitez rapidement votre file commerciale.</p></div>
-        <Link href="/commercial/prospects/new" className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link>
+        <div className="flex flex-col gap-2 sm:flex-row"><Link href="/commercial/appels" className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg border bg-card px-4 text-sm font-medium transition hover:bg-muted">Prospects à appeler</Link><Link href="/commercial/prospects/new" className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:opacity-90">+ Nouveau prospect</Link></div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href={prospectUrl(params, { stage: "", page: "1" })} className={`rounded-xl border p-4 transition hover:border-primary ${!selectedStage ? "border-primary bg-primary/5" : "bg-card"}`}>
-          <div className="text-sm text-muted-foreground">Tous les prospects</div><div className="mt-1 text-2xl font-semibold">{allProspectsCount}</div>
+      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+        <Link href={prospectUrl(params, { stage: "", page: "1" })} className={`min-w-44 snap-start rounded-xl border p-4 transition hover:border-primary sm:min-w-0 ${!selectedStage ? "border-primary bg-primary/5" : "bg-card"}`}>
+          <div className="text-sm text-muted-foreground">Tous</div><div className="mt-1 text-2xl font-semibold">{allProspectsCount}</div>
         </Link>
-        {stages.map((stage) => <Link key={stage} href={prospectUrl(params, { stage, page: "1" })} className={`rounded-xl border p-4 transition hover:border-primary ${selectedStage === stage ? "border-primary bg-primary/5" : "bg-card"}`}><div className="flex items-center justify-between gap-2"><span className={`rounded-full px-2 py-1 text-xs font-medium ${stageStyles[stage]}`}>{formatProspectStage(stage)}</span><strong className="text-xl">{counts.get(stage) ?? 0}</strong></div></Link>)}
+        {stages.map((stage) => <Link key={stage} href={prospectUrl(params, { stage, page: "1" })} className={`min-w-44 snap-start rounded-xl border p-4 transition hover:border-primary sm:min-w-0 ${selectedStage === stage ? "border-primary bg-primary/5" : "bg-card"}`}><div className="flex items-center justify-between gap-2"><span className={`rounded-full px-2 py-1 text-xs font-medium ${stageStyles[stage]}`}>{formatProspectStage(stage)}</span><strong className="text-xl">{counts.get(stage) ?? 0}</strong></div></Link>)}
       </div>
 
       <Card><form className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_220px_auto_auto]">
@@ -96,7 +97,7 @@ export default async function ProspectsPage({ searchParams }: { searchParams: Pr
           <tbody>
             {prospects.map((prospect) => <tr key={prospect.id} className="border-t align-top transition hover:bg-muted/40">
               <td className="px-4 py-3"><Link className="font-semibold text-foreground hover:text-primary hover:underline" href={`/commercial/prospects/${prospect.id}`}>{prospect.companyName}</Link><div className="mt-1 text-xs text-muted-foreground">{prospect.activity ?? "Activité non renseignée"}</div><div className="mt-1 text-xs font-medium">{formatCurrency(Number(prospect.potentialValue))}</div></td>
-              <td className="px-4 py-3"><div>{prospect.phone ?? "Aucun téléphone"}</div><div className="mt-1 max-w-52 truncate text-xs text-muted-foreground" title={prospect.email ?? undefined}>{prospect.email ?? "Aucun email"}</div></td>
+              <td className="px-4 py-3"><div>{prospect.phone ? <a className="font-medium hover:underline" href={toPhoneHref(prospect.phone)}>{prospect.phone}</a> : "Aucun téléphone"}</div><div className="mt-1 max-w-52 truncate text-xs text-muted-foreground" title={prospect.email ?? undefined}>{prospect.email ?? "Aucun email"}</div></td>
               <td className="px-4 py-3"><div>{prospect.city ?? "Ville inconnue"}</div><div className="mt-1 max-w-48 truncate text-xs text-muted-foreground" title={prospect.address ?? undefined}>{prospect.address ?? "Adresse non renseignée"}</div></td>
               <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${stageStyles[prospect.stage]}`}>{formatProspectStage(prospect.stage)}</span>{prospect.stage === ProspectStage.LOST && prospect.lostAt ? <div className="mt-1 text-xs text-muted-foreground">Perdu le {prospect.lostAt.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}</div> : null}</td>
               <td className="px-4 py-3"><div className="max-w-48">{prospect.nextAction ?? "Aucune action"}</div><div className="mt-1 text-xs text-muted-foreground">{prospect.nextFollowUpAt ? `Relance le ${prospect.nextFollowUpAt.toLocaleDateString("fr-FR")}` : "Aucune relance prévue"}</div></td>
